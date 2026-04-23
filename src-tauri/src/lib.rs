@@ -1,6 +1,7 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub mod achievement_manager;
 pub mod automation;
+pub mod command_runner;
 pub mod crypto;
 pub mod custom_lists;
 pub mod game_data;
@@ -8,6 +9,7 @@ pub mod idling;
 pub mod logging;
 pub mod process_handler;
 pub mod settings;
+pub mod steam_utility;
 pub mod trading_cards;
 pub mod user_data;
 pub mod utils;

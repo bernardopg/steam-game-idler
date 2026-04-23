@@ -1,8 +1,8 @@
+use crate::command_runner::apply_hidden_command_style;
 use crate::utils::{get_cache_dir, get_lib_path};
 use serde_json::{json, Value};
 use std::fs::File;
 use std::io::Read;
-use std::os::windows::process::CommandExt;
 
 #[tauri::command]
 pub async fn get_achievement_data(
@@ -18,18 +18,16 @@ pub async fn get_achievement_data(
     let file_name = format!("{}.json", app_id);
     let achievement_file_path = app_data_dir.join(&file_name);
 
-    // Check if file already exists and whether we should use it
     let should_fetch_new = refetch.unwrap_or(false) || !achievement_file_path.exists();
 
     let achievement_data = if should_fetch_new {
         let cache_dir = get_cache_dir(&app_handle)?;
         let cache_dir_str = cache_dir.to_string_lossy().to_string();
 
-        // Fetch new data
         let exe_path = get_lib_path()?;
-        let output = std::process::Command::new(exe_path)
-            .args(&["get_achievement_data", &app_id.to_string(), &cache_dir_str])
-            .creation_flags(0x08000000)
+        let mut command = std::process::Command::new(exe_path);
+        command.args(["get_achievement_data", &app_id.to_string(), &cache_dir_str]);
+        let output = apply_hidden_command_style(&mut command)
             .output()
             .map_err(|e| format!("Failed to execute unlocker: {}", e))?;
 
@@ -55,7 +53,6 @@ pub async fn get_achievement_data(
             json!({})
         }
     } else {
-        // Read existing file
         let mut file = File::open(&achievement_file_path)
             .map_err(|e| format!("Failed to open achievement file: {}", e))?;
         let mut contents = String::new();
@@ -68,100 +65,49 @@ pub async fn get_achievement_data(
     Ok(json!({"achievement_data": achievement_data}))
 }
 
+fn run_steam_utility_command(args: &[&str]) -> Result<String, String> {
+    let exe_path = get_lib_path()?;
+    let mut command = std::process::Command::new(exe_path);
+    command.args(args);
+
+    let output = apply_hidden_command_style(&mut command)
+        .output()
+        .map_err(|e| format!("Failed to execute SteamUtility command: {}", e))?;
+
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
 #[tauri::command]
-// Unlock an achievement
 pub async fn unlock_achievement(app_id: u32, achievement_id: &str) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["unlock_achievement", &app_id.to_string(), achievement_id])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute unlocker");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["unlock_achievement", &app_id.to_string(), achievement_id])
 }
 
 #[tauri::command]
-// Lock an achievement
 pub async fn lock_achievement(app_id: u32, achievement_id: &str) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["lock_achievement", &app_id.to_string(), achievement_id])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute unlocker");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["lock_achievement", &app_id.to_string(), achievement_id])
 }
 
 #[tauri::command]
-// Unlock an achievement
 pub async fn toggle_achievement(app_id: u32, achievement_id: &str) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["toggle_achievement", &app_id.to_string(), achievement_id])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute unlocker");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["toggle_achievement", &app_id.to_string(), achievement_id])
 }
 
 #[tauri::command]
-// Unlock all achievements
 pub async fn unlock_all_achievements(app_id: u32) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["unlock_all_achievements", &app_id.to_string()])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute unlocker");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["unlock_all_achievements", &app_id.to_string()])
 }
 
 #[tauri::command]
-// Lock all achievements
 pub async fn lock_all_achievements(app_id: u32) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["lock_all_achievements", &app_id.to_string()])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute unlocker");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["lock_all_achievements", &app_id.to_string()])
 }
 
 #[tauri::command]
-// Update achievement statistic
 pub async fn update_stats(app_id: u32, stats_arr: &str) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["update_stats", &app_id.to_string(), stats_arr])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute stat updater");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["update_stats", &app_id.to_string(), stats_arr])
 }
 
 #[tauri::command]
-// Reset all achievement statistics
 pub async fn reset_all_stats(app_id: u32) -> Result<String, String> {
-    let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["reset_all_stats", &app_id.to_string()])
-        .creation_flags(0x08000000)
-        .output()
-        .expect("failed to execute stat updater");
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    Ok(output_str.to_string())
+    run_steam_utility_command(&["reset_all_stats", &app_id.to_string()])
 }

@@ -1,10 +1,12 @@
+#[cfg(windows)]
+use crate::command_runner::apply_hidden_command_style;
+use crate::steam_utility::resolve_steam_utility_path_from_base;
 use base64::Engine;
 use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::Client;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::os::windows::process::CommandExt;
 use std::sync::Mutex;
 use std::time::Duration;
 use steamlocate::SteamDir;
@@ -25,9 +27,10 @@ pub async fn is_dev() -> bool {
 pub async fn is_steam_running() -> bool {
     let mut sys = System::new();
     sys.refresh_processes(ProcessesToUpdate::All, true);
-    sys.processes()
-        .values()
-        .any(|proc| proc.name().eq_ignore_ascii_case("steam.exe"))
+    sys.processes().values().any(|proc| {
+        let name = proc.name().to_ascii_lowercase();
+        name == "steam.exe" || name == "steam"
+    })
 }
 
 #[tauri::command]
@@ -114,25 +117,67 @@ pub async fn validate_steam_api_key(
 
 #[tauri::command]
 pub async fn anti_away() -> Result<(), String> {
-    // Execute a command to set Steam status to online
-    std::process::Command::new("cmd")
-        .args(&["/C", "start steam://friends/status/online"])
-        .creation_flags(0x08000000)
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    #[cfg(windows)]
+    {
+        let mut command = std::process::Command::new("cmd");
+        command.args(["/C", "start steam://friends/status/online"]);
+        apply_hidden_command_style(&mut command)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(not(windows))]
+    {
+        std::process::Command::new("xdg-open")
+            .arg("steam://friends/status/online")
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }
 
 #[tauri::command]
 pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<(), String> {
     let cache_dir = get_cache_dir(&app_handle)?;
+    let normalized_path = if std::path::MAIN_SEPARATOR == '\\' {
+        path
+    } else {
+        path.replace('\\', &std::path::MAIN_SEPARATOR.to_string())
+    };
+    let target_path = cache_dir.join(normalized_path);
 
-    // Open the file explorer and select the specified path
-    std::process::Command::new("explorer")
-        .args(["/select,", cache_dir.join(path).to_str().unwrap()])
-        .creation_flags(0x08000000)
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    #[cfg(windows)]
+    {
+        let mut command = std::process::Command::new("explorer");
+        command.args(["/select,", target_path.to_str().unwrap()]);
+        apply_hidden_command_style(&mut command)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .args(["-R", target_path.to_str().unwrap()])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let path_to_open = if target_path.is_file() {
+            target_path.parent().unwrap_or(&target_path)
+        } else {
+            &target_path
+        };
+
+        std::process::Command::new("xdg-open")
+            .arg(path_to_open)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }
 
@@ -147,12 +192,10 @@ pub fn get_tray_icon(default: bool) -> String {
 }
 
 pub fn get_lib_path() -> Result<String, String> {
-    // Get the current executable path
     let mut path = std::env::current_exe().map_err(|e| e.to_string())?;
     path.pop();
-    path.push("libs");
-    path.push("SteamUtility.exe");
-    Ok(path.to_str().unwrap().to_string())
+    let resolved = resolve_steam_utility_path_from_base(&path);
+    Ok(resolved.to_string_lossy().to_string())
 }
 
 pub async fn get_steam_location() -> Result<String, steamlocate::Error> {

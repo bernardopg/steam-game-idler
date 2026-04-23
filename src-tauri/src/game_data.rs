@@ -1,3 +1,4 @@
+use crate::command_runner::apply_hidden_command_style;
 use crate::utils::{get_cache_dir, get_lib_path};
 use reqwest::Client;
 use scraper::{Html, Selector};
@@ -8,7 +9,6 @@ use std::fs::File;
 use std::fs::{create_dir_all, remove_dir_all, remove_file, OpenOptions};
 use std::io::Read;
 use std::io::Write;
-use std::os::windows::process::CommandExt;
 use tauri::Manager;
 
 #[derive(Serialize, Deserialize)]
@@ -30,18 +30,16 @@ pub async fn get_games_list(
     api_key: Option<String>,
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
-    // Set file paths
     let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
     create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
 
     let temp_games_file = app_data_dir.join("temp_owned_games.json");
     let temp_games_file_str = temp_games_file.to_string_lossy().to_string();
 
-    // Create an empty temp file to write to
     let exe_path = get_lib_path()?;
-    let output = std::process::Command::new(exe_path)
-        .args(&["check_ownership", &temp_games_file_str])
-        .creation_flags(0x08000000)
+    let mut command = std::process::Command::new(exe_path);
+    command.args(["check_ownership", &temp_games_file_str]);
+    let output = apply_hidden_command_style(&mut command)
         .output()
         .map_err(|e| format!("Failed to execute check_ownership: {}", e))?;
 
@@ -63,7 +61,6 @@ pub async fn get_games_list(
         ));
     }
 
-    // Read the temp games file
     let mut file = File::open(&temp_games_file)
         .map_err(|e| format!("Failed to open temp games file: {}", e))?;
     let mut contents = String::new();
@@ -78,7 +75,6 @@ pub async fn get_games_list(
 
     let key = api_key.unwrap_or_else(|| std::env::var("KEY").unwrap());
 
-    // Fetch owned games from the Steam Web API
     let url = format!(
         "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={}&steamid={}&include_appinfo=true&include_played_free_games=true&include_free_sub=true&skip_unvetted_apps=false&include_extended_appinfo=false",
         key, steam_id
@@ -99,7 +95,6 @@ pub async fn get_games_list(
         }
     }
 
-    // Merge both lists filling in playtime from the web API
     let mut merged_games: Vec<GameData> = Vec::new();
     for game in cs_games {
         if let (Some(appid), Some(name)) = (game["appid"].as_u64(), game["name"].as_str()) {
@@ -112,7 +107,6 @@ pub async fn get_games_list(
         }
     }
 
-    // Add any games from the web API that weren't in the original list
     let cs_appids: std::collections::HashSet<u64> = merged_games.iter().map(|g| g.appid).collect();
     if let Some(web_games) = web_api_body["response"]["games"].as_array() {
         for game in web_games {
@@ -161,167 +155,93 @@ pub async fn get_recent_games(
     api_key: Option<String>,
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
-    // Get the API key from the envor use the provided one
     let key = api_key.unwrap_or_else(|| std::env::var("KEY").unwrap());
+
     let url = format!(
-        "https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={}&steamid={}",
+        "https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={}&steamid={}&count=4",
         key, steam_id
     );
 
     let client = Client::new();
+    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
+    let body: Value = response.json().await.map_err(|e| e.to_string())?;
 
-    // Send the request and handle the response
-    match client.get(&url).send().await {
-        Ok(response) => {
-            let body: Value = response.json().await.map_err(|e| e.to_string())?;
+    let file_path = get_cache_dir(&app_handle)?
+        .join(steam_id.clone())
+        .join("games_list.json");
 
-            // Process the response to extract only needed fields
-            let filtered_data = filter_game_data(&body)?;
-
-            let game_data = json!({
-                "games_list": filtered_data
-            });
-
-            let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
-            create_dir_all(&app_data_dir)
-                .map_err(|e| format!("Failed to create app directory: {}", e))?;
-
-            // Save the filtered response to recent_games.json
-            let file_name = format!("recent_games.json");
-            let recent_games_file_path = app_data_dir.join(file_name);
-            let mut file = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open(&recent_games_file_path)
-                .map_err(|e| format!("Failed to open recent games file: {}", e))?;
-
-            let json_string = serde_json::to_string_pretty(&game_data)
-                .map_err(|e| format!("Failed to serialize recent games: {}", e))?;
-            file.write_all(json_string.as_bytes())
-                .map_err(|e| format!("Failed to write recent games to file: {}", e))?;
-
-            Ok(game_data)
-        }
-        Err(err) => Err(err.to_string()),
+    if !file_path.exists() {
+        return Ok(json!({
+            "games_list": [],
+            "recent_games": body["response"]["games"].as_array().cloned().unwrap_or_default()
+        }));
     }
-}
 
-// Helper function to filter game data
-fn filter_game_data(data: &Value) -> Result<Value, String> {
-    let games = match &data["response"]["games"] {
-        Value::Array(games) => games,
-        _ => return Ok(json!([])),
-    };
-
-    let filtered_games: Vec<GameData> = games
-        .iter()
-        .filter_map(|game| {
-            let appid = game["appid"].as_u64()?;
-            let name = game["name"].as_str()?.to_string();
-            let playtime_forever = game["playtime_forever"].as_u64().unwrap_or(0);
-
-            Some(GameData {
-                appid,
-                name,
-                playtime_forever,
-            })
-        })
-        .collect();
-
-    Ok(json!(filtered_games))
-}
-
-#[tauri::command]
-pub fn get_games_list_cache(
-    steam_id: String,
-    app_handle: tauri::AppHandle,
-) -> Result<Value, String> {
-    let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
-
-    // Read games list file
-    let games_list = {
-        let file_name = format!("games_list.json");
-        let games_file_path = app_data_dir.join(file_name);
-        if games_file_path.exists() {
-            let mut file = File::open(&games_file_path)
-                .map_err(|e| format!("Failed to open games list file: {}", e))?;
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)
-                .map_err(|e| format!("Failed to read games list file: {}", e))?;
-            let parsed: Value = serde_json::from_str(&contents)
-                .map_err(|e| format!("Failed to parse games list JSON: {}", e))?;
-
-            // Extract the games_list array from the parsed object
-            parsed.get("games_list").cloned().unwrap_or(json!({}))
-        } else {
-            json!({})
-        }
-    };
-
-    // Read recent games file
-    let recent_games = {
-        let file_name = format!("recent_games.json");
-        let recent_games_file_path = app_data_dir.join(file_name);
-        if recent_games_file_path.exists() {
-            let mut file = File::open(&recent_games_file_path)
-                .map_err(|e| format!("Failed to open recent games file: {}", e))?;
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)
-                .map_err(|e| format!("Failed to read recent games file: {}", e))?;
-            let parsed: Value = serde_json::from_str(&contents)
-                .map_err(|e| format!("Failed to parse recent games JSON: {}", e))?;
-
-            // Extract the games_list array from the parsed object
-            parsed.get("games_list").cloned().unwrap_or(json!({}))
-        } else {
-            json!({})
-        }
-    };
+    let mut file = File::open(&file_path)
+        .map_err(|e| format!("Failed to open games list file: {}", e))?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .map_err(|e| format!("Failed to read games list file: {}", e))?;
+    let games_list_json: Value = serde_json::from_str(&contents)
+        .map_err(|e| format!("Failed to parse games list JSON: {}", e))?;
 
     Ok(json!({
-        "games_list": games_list,
-        "recent_games": recent_games
+        "games_list": games_list_json["games_list"].as_array().cloned().unwrap_or_default(),
+        "recent_games": body["response"]["games"].as_array().cloned().unwrap_or_default()
     }))
 }
 
 #[tauri::command]
-pub fn delete_user_games_list_files(
+pub async fn get_games_list_cache(
     steam_id: String,
     app_handle: tauri::AppHandle,
-) -> Result<(), String> {
-    let games_list_file_name = format!("games_list.json");
-    let recent_games_file_name = format!("recent_games.json");
-    let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
-    // Delete the games list file
-    let games_file_path = app_data_dir.join(games_list_file_name);
-    if games_file_path.exists() {
-        remove_file(&games_file_path)
-            .map_err(|e| format!("Failed to delete games list file: {}", e))?;
-    }
-    // Delete the recent games file
-    let recent_games_file_path = app_data_dir.join(recent_games_file_name);
-    if recent_games_file_path.exists() {
-        remove_file(&recent_games_file_path)
-            .map_err(|e| format!("Failed to delete recent games file: {}", e))?;
+) -> Result<Value, String> {
+    let file_path = get_cache_dir(&app_handle)?
+        .join(steam_id.clone())
+        .join("games_list.json");
+
+    if !file_path.exists() {
+        return Ok(json!({
+            "games_list": []
+        }));
     }
 
-    Ok(())
+    let mut file = File::open(&file_path)
+        .map_err(|e| format!("Failed to open games list file: {}", e))?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .map_err(|e| format!("Failed to read games list file: {}", e))?;
+    let games_list_json: Value = serde_json::from_str(&contents)
+        .map_err(|e| format!("Failed to parse games list JSON: {}", e))?;
+
+    Ok(games_list_json)
 }
 
 #[tauri::command]
-pub fn delete_all_cache_files(app_handle: tauri::AppHandle) -> Result<(), String> {
-    let cache_data_dir = get_cache_dir(&app_handle)?;
-    // Delete the cache directory
-    match remove_dir_all(&cache_data_dir) {
-        Ok(_) => println!("Successfully deleted directory: {:?}", cache_data_dir),
-        Err(e) => println!(
-            "Failed to delete directory: {:?}, Error: {}",
-            cache_data_dir, e
-        ),
+pub async fn delete_user_games_list_files(
+    steam_id: String,
+    app_handle: tauri::AppHandle,
+) -> Result<Value, String> {
+    let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
+    let games_file_path = app_data_dir.join("games_list.json");
+    let temp_games_file_path = app_data_dir.join("temp_owned_games.json");
+
+    let _ = remove_file(games_file_path);
+    let _ = remove_file(temp_games_file_path);
+
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+pub async fn delete_all_cache_files(app_handle: tauri::AppHandle) -> Result<Value, String> {
+    let cache_dir = get_cache_dir(&app_handle)?;
+
+    if cache_dir.exists() {
+        remove_dir_all(&cache_dir)
+            .map_err(|e| format!("Failed to delete cache directory: {}", e))?;
     }
 
-    Ok(())
+    Ok(json!({ "success": true }))
 }
 
 #[tauri::command]
@@ -340,7 +260,6 @@ pub async fn get_free_games() -> Result<serde_json::Value, String> {
 
     let mut free_games = Vec::new();
 
-    // Parse the HTML to find free games
     for element in document.select(&a_selector) {
         if let Some(app_id) = element.value().attr("data-ds-appid") {
             if let Some(title_element) = element.select(&title_selector).next() {
@@ -356,7 +275,6 @@ pub async fn get_free_games() -> Result<serde_json::Value, String> {
     Ok(json!({ "games": free_games }))
 }
 
-// Redeem a free game by opening the Steam store page and clicking the "Add to Library" button if available
 #[tauri::command]
 pub async fn redeem_free_game(
     app_handle: tauri::AppHandle,
@@ -364,10 +282,8 @@ pub async fn redeem_free_game(
 ) -> Result<Value, String> {
     use std::time::Duration;
 
-    // Construct the URL for the game page
     let url = format!("https://store.steampowered.com/app/{}", app_id);
 
-    // Create a hidden window for the game page
     let window = tauri::webview::WebviewWindowBuilder::new(
         &app_handle,
         &format!("steam-redeem-{}", app_id),
@@ -379,68 +295,30 @@ pub async fn redeem_free_game(
     .build()
     .map_err(|e| e.to_string())?;
 
-    // Wait a moment for the page to load
     tokio::time::sleep(Duration::from_millis(5000)).await;
 
-    // Poll for the "Add to Account" button up to 5 times, every second
     for _ in 0..5 {
         if let Some(webview) = window.get_webview(&format!("steam-redeem-{}", app_id)) {
-            // Execute JavaScript to check for the button and click it
             let js_check = r#"
                 (function() {
-                    console.log('=== Debug: Starting button search ===');
-                    
-                    // Check for btn_addtocart div
-                    const cartDiv = document.querySelector('.btn_addtocart');
-                    console.log('btn_addtocart div found:', !!cartDiv);
-                    if (cartDiv) {
-                        console.log('btn_addtocart HTML:', cartDiv.innerHTML);
-                    }
-                    
-                    // Try different selectors
-                    const btn1 = document.querySelector('.btn_addtocart a');
-                    console.log('Selector ".btn_addtocart a" found:', !!btn1);
-                    
-                    const btn2 = document.querySelector('.btn_addtocart a.btn_green_steamui');
-                    console.log('Selector ".btn_addtocart a.btn_green_steamui" found:', !!btn2);
-                    
-                    const btn3 = document.querySelector('a.btn_green_steamui[href*="addToCart"]');
-                    console.log('Selector "a.btn_green_steamui[href*="addToCart"]" found:', !!btn3);
-                    
-                    const btn4 = document.querySelector('.btn_addtocart a[href*="addToCart"]');
-                    console.log('Selector ".btn_addtocart a[href*="addToCart"]" found:', !!btn4);
-                    
-                    // Use the most specific selector
                     const btn = document.querySelector('.btn_addtocart a[href*="addToCart"]');
                     if (!btn) {
-                        console.error('Button not found with any selector');
                         throw new Error('Button not found');
                     }
-                    
-                    console.log('Found button:', btn);
+
                     const href = btn.getAttribute('href');
-                    console.log('Button href:', href);
-                    
                     const match = href.match(/addToCart\(\s*(\d+)\s*\)/);
                     if (!match) {
-                        console.error('No match for product ID in href:', href);
                         throw new Error('No match for product ID');
                     }
-                    
-                    const productId = match[1];
-                    console.log('Found product ID:', productId);
-                    
-                    // Call the addToCart function
-                    console.log('Calling addToCart with product ID:', productId);
-                    addToCart(productId);
-                    
+
+                    addToCart(match[1]);
                     return true;
                 })();
             "#;
 
             match webview.eval(js_check) {
                 Ok(_) => {
-                    // Button found and clicked, wait a bit then close
                     tokio::time::sleep(Duration::from_millis(500)).await;
                     let _ = window.close();
                     return Ok(serde_json::json!({
@@ -449,12 +327,10 @@ pub async fn redeem_free_game(
                     }));
                 }
                 Err(e) => {
-                    // JS execution failed (button not found), continue polling
                     println!("JS execution error: {}", e);
                 }
             }
         } else {
-            // Window or webview no longer exists
             return Ok(serde_json::json!({
                 "success": false,
                 "message": "Redeem window closed unexpectedly"
@@ -464,10 +340,63 @@ pub async fn redeem_free_game(
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
 
-    // If we reach here, the button was not found
     let _ = window.close();
     Ok(serde_json::json!({
         "success": false,
         "message": "Could not find redeem button or game is not free"
     }))
+}
+
+#[tauri::command]
+pub async fn scrape_game_banner(app_id: u32) -> Result<Value, String> {
+    let client = Client::new();
+    let url = format!("https://store.steampowered.com/app/{}", app_id);
+
+    let html = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let document = Html::parse_document(&html);
+    let selector = Selector::parse("img.game_header_image_full")
+        .map_err(|e| format!("Failed to create selector: {}", e))?;
+
+    let image_url = document
+        .select(&selector)
+        .next()
+        .and_then(|element| element.value().attr("src"))
+        .unwrap_or_default();
+
+    Ok(json!({ "imageUrl": image_url }))
+}
+
+#[tauri::command]
+pub async fn scrape_game_description(app_id: u32) -> Result<Value, String> {
+    let client = Client::new();
+    let url = format!("https://store.steampowered.com/app/{}", app_id);
+
+    let html = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let document = Html::parse_document(&html);
+    let selector = Selector::parse("div.game_description_snippet")
+        .map_err(|e| format!("Failed to create selector: {}", e))?;
+
+    let description = document
+        .select(&selector)
+        .next()
+        .map(|element| element.text().collect::<String>().trim().to_string())
+        .unwrap_or_default();
+
+    Ok(json!({ "description": description }))
 }
