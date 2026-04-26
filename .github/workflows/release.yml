@@ -145,6 +145,52 @@ jobs:
           path: src-tauri/libs/
           retention-days: 1
 
+  build_dotnet_linux:
+    name: Build SteamUtility.Cli (Linux x64)
+    runs-on: ubuntu-22.04
+    needs: [fetch_previous_version, validate_version]
+    timeout-minutes: 15
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: linux-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: linux-nuget-
+
+      - name: Checkout steam-utility-multiplataform
+        uses: actions/checkout@v4
+        with:
+          repository: bernardopg/steam-utility-multiplataform
+          path: steam-utility-multiplataform
+
+      - name: Restore dependencies
+        working-directory: steam-utility-multiplataform
+        run: dotnet restore src/SteamUtility.Cli/SteamUtility.Cli.csproj -r linux-x64
+
+      - name: Publish SteamUtility.Cli (self-contained, single file)
+        working-directory: steam-utility-multiplataform
+        run: |
+          dotnet publish src/SteamUtility.Cli \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            --no-restore \
+            -o ./artifacts/linux-x64
+
+      - name: Upload SteamUtility.Cli artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: steamutility-cli-linux-x64
+          path: steam-utility-multiplataform/artifacts/linux-x64/SteamUtility.Cli
+          retention-days: 1
+
   build_release_bundle:
     needs: [build_dotnet_libs, fetch_previous_version, validate_version]
     timeout-minutes: 30
@@ -389,8 +435,108 @@ jobs:
         with:
           name: dotnet-libs
 
+  build_release_linux:
+    name: Build Linux release bundle (.deb + AppImage)
+    needs: [fetch_previous_version, build_dotnet_linux, build_release_bundle]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            squashfs-tools \
+            patchelf
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: linux-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: linux-pnpm-
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Download SteamUtility.Cli artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: steamutility-cli-linux-x64
+          path: src-tauri/libs/
+
+      - name: Make SteamUtility.Cli executable
+        run: chmod +x src-tauri/libs/SteamUtility.Cli
+
+      - name: Update version number
+        run: |
+          OLD_VERSION=$(echo "${{ needs.fetch_previous_version.outputs.previous_version }}" | sed 's/^v//')
+          NEW_VERSION="${{ github.event.inputs.version }}"
+          sed -i "s/${OLD_VERSION}/${NEW_VERSION}/g" src-tauri/tauri.conf.json
+          echo "Version bumped: ${OLD_VERSION} → ${NEW_VERSION}"
+
+      - name: Create .env.prod file
+        run: echo "KEY=${{ secrets.KEY }}" > .env.prod
+
+      - name: Build Tauri (Linux)
+        run: |
+          export NEXT_TELEMETRY_DISABLED=1
+          export TAURI_CI=1
+          pnpm tauri build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Upload Linux artifacts to GitHub release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: |
+            ./src-tauri/target/release/bundle/deb/*.deb
+            ./src-tauri/target/release/bundle/appimage/*.AppImage
+            ./src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
+            ./src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
+
+      - name: Cleanup Linux CLI artifact
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: steamutility-cli-linux-x64
+
   send_discord_notification:
-    needs: build_release_bundle
+    needs: [build_release_bundle, build_release_linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

@@ -44,13 +44,7 @@
     "resources": ["libs/*", "LICENSE", ".installed"],
     "linux": {
       "deb": {
-        "depends": [
-          "libwebkit2gtk-4.1-0",
-          "libgtk-3-0",
-          "libssl3",
-          "libappindicator3-1",
-          "dotnet-runtime-10"
-        ]
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libssl3", "libayatana-appindicator3-1"]
       }
     },
     "licenseFile": "LICENSE",
