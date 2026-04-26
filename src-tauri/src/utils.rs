@@ -254,16 +254,17 @@ pub fn quit_app(app_handle: tauri::AppHandle) {
 // Command to set the zoom level of the webview
 #[tauri::command]
 pub fn set_zoom(webview: tauri::Webview, scale_factor: f64) -> Result<(), String> {
+    #[cfg(windows)]
     webview
-        .with_webview(move |webview| {
-            #[cfg(windows)]
-            unsafe {
-                if let Err(e) = webview.controller().SetZoomFactor(scale_factor) {
-                    eprintln!("Failed to set zoom factor: {}", e);
-                }
+        .with_webview(move |wv| unsafe {
+            if let Err(e) = wv.controller().SetZoomFactor(scale_factor) {
+                eprintln!("Failed to set zoom factor: {}", e);
             }
         })
         .map_err(|e| e.to_string())?;
+
+    #[cfg(not(windows))]
+    let _ = (webview, scale_factor);
 
     Ok(())
 }

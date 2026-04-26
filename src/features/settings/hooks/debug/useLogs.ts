@@ -13,7 +13,7 @@ export const useLogs = () => {
     const fetchLogs = async () => {
       try {
         const fullLogPath = await invoke<string>('get_cache_dir_path')
-        const logFilePath = `${fullLogPath}\\log.txt`
+        const logFilePath = `${fullLogPath}/log.txt`
 
         // Check if log file exists
         let logContents = ''
