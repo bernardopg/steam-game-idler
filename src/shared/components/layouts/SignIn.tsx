@@ -63,7 +63,6 @@ function UserSelectionArea({ onRefresh }: { onRefresh: () => void }) {
     isLoading,
     userSummaries,
     handleLogin,
-    steamUsers,
     selectedUser,
     setSelectedUser,
     getRandomAvatarUrl,
@@ -173,7 +172,7 @@ function UserSelectionArea({ onRefresh }: { onRefresh: () => void }) {
             radius='full'
             className='font-semibold bg-content text-black group'
             onPress={() => {
-              if (selectedUser) handleLogin(steamUsers.indexOf(selectedUser))
+              if (selectedUser) handleLogin(selectedUser)
             }}
             isDisabled={!selectedUser}
           >

@@ -143,23 +143,20 @@ export function useSignIn(refreshKey: number) {
     getSteamUsers()
   }, [userSettings.general?.apiKey, refreshKey])
 
-  const handleLogin = async (index: number) => {
+  const handleLogin = async (userSummary: UserSummary) => {
     try {
       // Make sure Steam is running
       const isSteamRunning = await checkSteamStatus(true)
 
-      const devAccounts = ['76561198158912649', '76561198999797359']
-      const isDev = await invoke('is_dev')
-
-      if (!isSteamRunning && !isDev && !devAccounts.includes(userSummaries[index]?.steamId ?? ''))
-        return
+      if (!isSteamRunning) {
+        logEvent('[System] Steam app is not running. Open the Steam client to continue.')
+      }
 
       setIsLoading(true)
-      const userSummary = userSummaries[index]
 
       // mostRecent !== 1 means this isn't the account that's currently logged in to Steam
       // so show a warning to the user when they log in
-      if (userSummaries[index]?.mostRecent !== 1) showAccountMismatchToast('warning')
+      if (isSteamRunning && userSummary?.mostRecent !== 1) showAccountMismatchToast('warning')
 
       // Save selected user to localStorage and context for app-wide access
       localStorage.setItem('userSummary', JSON.stringify(userSummary))
