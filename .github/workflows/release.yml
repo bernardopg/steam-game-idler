@@ -31,6 +31,10 @@ on:
         required: false
         type: boolean
         default: false
+      utility_ref:
+        description: "steam-utility-multiplataform ref (branch, tag, or SHA) to build the Linux CLI from"
+        required: false
+        default: "main"
 
 run-name: Build release v${{ github.event.inputs.version }}
 
@@ -57,32 +61,32 @@ jobs:
     steps:
       - name: Validate semantic version format
         id: validate_format
-        uses: matt-usurp/validate-semver@v2
+        uses: matt-usurp/validate-semver@v3
         with:
           version: ${{ github.event.inputs.version }}
-      
+
       - name: Validate version increment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const prev = '${{ needs.fetch_previous_version.outputs.previous_version }}'.replace(/^v/, '');
             const next = '${{ github.event.inputs.version }}'.replace(/^v/, '');
-            
+
             const [prevMajor, prevMinor, prevPatch] = prev.split('.').map(Number);
             const [nextMajor, nextMinor, nextPatch] = next.split('.').map(Number);
-            
+
             // Check if it's a valid increment
             const isMajor = nextMajor > prevMajor && nextMinor === 0 && nextPatch === 0;
             const isMinor = nextMajor === prevMajor && nextMinor > prevMinor && nextPatch === 0;
             const isPatch = nextMajor === prevMajor && nextMinor === prevMinor && nextPatch === prevPatch + 1;
-            
+
             if (!isMajor && !isMinor && !isPatch) {
               const validOptions = [
                 `${prevMajor}.${prevMinor}.${prevPatch + 1} (patch)`,
                 `${prevMajor}.${prevMinor + 1}.0 (minor)`,
                 `${prevMajor + 1}.0.0 (major)`
               ];
-              
+
               core.setFailed(
                 `❌ Invalid version increment!\n\n` +
                 `Current: ${prev}\n` +
@@ -90,7 +94,7 @@ jobs:
                 `Valid options:\n${validOptions.map(v => `  • ${v}`).join('\n')}`
               );
             }
-            
+
             console.log(`✅ Valid version increment: ${prev} → ${next}`);
 
   build_dotnet_libs:
@@ -167,6 +171,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: bernardopg/steam-utility-multiplataform
+          ref: ${{ github.event.inputs.utility_ref }}
           path: steam-utility-multiplataform
 
       - name: Restore dependencies
@@ -207,9 +212,9 @@ jobs:
           node-version: "20"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: 10
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -366,7 +371,7 @@ jobs:
               tag_name: '${{ github.event.inputs.version }}',
               previous_tag_name: '${{ needs.fetch_previous_version.outputs.previous_version }}'
             });
-            
+
             // Remove lines for version bumps, docs, ci, etc
             let body = data.body;
             const lines = body.split('\n');
@@ -381,16 +386,16 @@ jobs:
               if (trimmed.startsWith('* docs:')) return false;
               return true;
             });
-            
+
             const cleanedBody = filtered.join('\n');
-            
+
             // Save to file
             const fs = require('fs');
             fs.writeFileSync('./release_notes.md', cleanedBody);
-            
+
             console.log('Generated release notes:');
             console.log(cleanedBody);
-            
+
             return cleanedBody;
 
       - name: Prepare portable executable
@@ -398,19 +403,19 @@ jobs:
           # Create portable package directory
           $portableDir = "./portable-package"
           New-Item -ItemType Directory -Force -Path $portableDir
-          
+
           # Copy the executable with the correct name
           Copy-Item "./src-tauri/target/release/Steam Game Idler.exe" -Destination "$portableDir/Steam Game Idler.exe"
-          
+
           # Copy the libs folder
           Copy-Item "./src-tauri/libs" -Destination "$portableDir/libs" -Recurse -Force
 
           # Copy the LICENSE file
           Copy-Item "./LICENSE" -Destination "$portableDir/LICENSE" -Force
-          
+
           # Create the portable zip
           Compress-Archive -Path "$portableDir/*" -DestinationPath "./src-tauri/target/release/Steam Game Idler_${{ github.event.inputs.version }}_x64-portable.zip" -Force
-          
+
           # Clean up temporary directory
           Remove-Item -Recurse -Force $portableDir
         shell: pwsh
@@ -464,9 +469,9 @@ jobs:
           node-version: "20"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: 10
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -541,7 +546,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Send changelog to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -549,15 +554,15 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           CHANGELOG_FILE="docs/content/changelog/${VERSION}.mdx"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
-          
+
           if [ ! -f "$CHANGELOG_FILE" ]; then
             echo "Error: Changelog file not found: $CHANGELOG_FILE"
             exit 1
           fi
-          
+
           # Extract changelog body after frontmatter (remove everything between --- markers and trim)
           CHANGELOG_BODY=$(awk 'BEGIN{p=0} /^---$/{p++; next} p==2{print}' "$CHANGELOG_FILE" | sed '/^$/d')
-          
+
           # Create JSON payload using jq to properly escape everything
           jq -n \
             --arg version "$VERSION" \

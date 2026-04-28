@@ -9,12 +9,12 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6.0.2
       with:
         sparse-checkout: |
           .github
 
-    - uses: actions/labeler@v5
+    - uses: actions/labeler@v6.0.1
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         configuration-path: '.github/labeler.yml'
