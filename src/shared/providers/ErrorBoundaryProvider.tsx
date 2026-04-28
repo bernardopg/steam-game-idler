@@ -2,10 +2,40 @@ import { Component } from 'react'
 import { Button, cn } from '@heroui/react'
 import { ExtLink } from '@/shared/components'
 
+const CHUNK_RELOAD_KEY = 'sgi:chunk-load-reload-at'
+
+function isChunkLoadError(error: unknown) {
+  const errorLike = error as { message?: unknown; name?: unknown }
+  const message = String(errorLike?.message ?? error ?? '')
+  const name = String(errorLike?.name ?? '')
+
+  return (
+    name === 'ChunkLoadError' ||
+    message.includes('ChunkLoadError') ||
+    message.includes('Failed to load chunk') ||
+    message.includes('Loading chunk') ||
+    message.includes('/_next/static/chunks/')
+  )
+}
+
+function recoverFromChunkLoadError(error: unknown) {
+  if (typeof window === 'undefined' || !isChunkLoadError(error)) return false
+
+  const now = Date.now()
+  const lastReload = Number(window.sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0)
+
+  if (now - lastReload < 10000) return false
+
+  window.sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now))
+  window.setTimeout(() => window.location.reload(), 50)
+  return true
+}
+
 interface ErrorBoundaryState {
   hasError: boolean
   error: Error | null
   errorInfo: React.ErrorInfo | null
+  recoveringChunk: boolean
 }
 
 interface ErrorBoundaryProps {
@@ -19,6 +49,7 @@ export class ErrorBoundaryProvider extends Component<ErrorBoundaryProps, ErrorBo
       hasError: false,
       error: null,
       errorInfo: null,
+      recoveringChunk: false,
     }
   }
 
@@ -26,18 +57,43 @@ export class ErrorBoundaryProvider extends Component<ErrorBoundaryProps, ErrorBo
     return { hasError: true }
   }
 
+  componentDidMount() {
+    window.setTimeout(() => {
+      window.sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+    }, 15000)
+
+    window.addEventListener('error', this.handleWindowError)
+    window.addEventListener('unhandledrejection', this.handleUnhandledRejection)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('error', this.handleWindowError)
+    window.removeEventListener('unhandledrejection', this.handleUnhandledRejection)
+  }
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    const recoveringChunk = recoverFromChunkLoadError(error)
+
     this.setState({
       error,
       errorInfo,
+      recoveringChunk,
     })
 
     console.error('Client side error caught by ErrorBoundary:', error, errorInfo)
   }
 
+  private handleWindowError = (event: ErrorEvent) => {
+    recoverFromChunkLoadError(event.error ?? event.message)
+  }
+
+  private handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    recoverFromChunkLoadError(event.reason)
+  }
+
   render(): React.ReactNode {
     if (this.state.hasError) {
-      const { error, errorInfo } = this.state
+      const { error, errorInfo, recoveringChunk } = this.state
 
       const issueTitle = error && String(error)
       const issueBody = `### Description
@@ -72,7 +128,11 @@ ${errorInfo && errorInfo.componentStack}
                 'bg-tab-panel rounded-lg border border-border p-4',
               )}
             >
-              <p className='text-sm'>An error occurred while rendering the application</p>
+              <p className='text-sm'>
+                {recoveringChunk
+                  ? 'Reloading after a development chunk update...'
+                  : 'An error occurred while rendering the application'}
+              </p>
 
               <div className='flex flex-col'>
                 <p className='font-bold'>Error</p>

@@ -7,7 +7,7 @@ import type {
   InvokeSettings,
   UserSummary,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
+import { platform } from '@tauri-apps/plugin-os'
 import {
   checkDrops,
   getAllGamesWithDrops,
@@ -16,6 +16,7 @@ import {
   startFarmIdle,
   stopFarmIdle,
 } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export interface GameForFarming {
   appid: number
@@ -34,6 +35,17 @@ export interface GameWithDrops extends GameForFarming {
 interface CycleStep {
   action: (gamesSet: Set<GameWithDrops>) => Promise<boolean>
   delay: number
+}
+
+const DEFAULT_MAX_FARM_IDLERS = 32
+const LINUX_MAX_FARM_IDLERS = 8
+
+async function getMaxFarmIdlers() {
+  try {
+    return (await platform()) === 'linux' ? LINUX_MAX_FARM_IDLERS : DEFAULT_MAX_FARM_IDLERS
+  } catch {
+    return DEFAULT_MAX_FARM_IDLERS
+  }
 }
 
 export const useCardFarming = async (
@@ -56,7 +68,8 @@ export const useCardFarming = async (
     try {
       if (!isMountedRef.current) return
 
-      const { totalDrops, gamesSet } = await checkGamesForDrops()
+      const maxFarmIdlers = await getMaxFarmIdlers()
+      const { totalDrops, gamesSet } = await checkGamesForDrops(maxFarmIdlers)
 
       if (!isMountedRef.current) return
 
@@ -64,7 +77,12 @@ export const useCardFarming = async (
       setGamesWithDrops(gamesSet)
 
       if (isMountedRef.current && gamesSet.size > 0) {
-        const success = await beginFarmingCycle(gamesSet, isMountedRef, abortControllerRef)
+        const success = await beginFarmingCycle(
+          gamesSet,
+          isMountedRef,
+          abortControllerRef,
+          maxFarmIdlers,
+        )
         if (!success) {
           logEvent('[Card Farming] An error occurred (this error can often be ignored) - stopping')
           return setIsComplete(true)
@@ -110,7 +128,7 @@ export const useCardFarming = async (
 }
 
 // Check games for drops and return total drops and games set
-const checkGamesForDrops = async () => {
+const checkGamesForDrops = async (maxFarmIdlers = DEFAULT_MAX_FARM_IDLERS) => {
   const userSummary = JSON.parse(localStorage.getItem('userSummary') || '{}') as UserSummary
 
   const response = await invoke<InvokeSettings>('get_user_settings', {
@@ -152,6 +170,7 @@ const checkGamesForDrops = async () => {
         farmUnplayedOnly,
         sortByHighestDrops,
         sortByLowestDrops,
+        maxFarmIdlers,
       )
     } else {
       totalDrops = await processIndividualGames(
@@ -161,6 +180,7 @@ const checkGamesForDrops = async () => {
         userSummary,
         credentials,
         blacklist,
+        maxFarmIdlers,
       )
     }
   } catch (error) {
@@ -179,6 +199,7 @@ const processGamesWithDrops = (
   farmUnplayedOnly: boolean,
   sortByHighestDrops: boolean,
   sortByLowestDrops: boolean,
+  maxFarmIdlers: number,
 ) => {
   let totalDrops = 0
 
@@ -200,7 +221,7 @@ const processGamesWithDrops = (
 
   if (sortedGames.length > 0) {
     for (const gameData of sortedGames) {
-      if (gamesSet.size < 32) {
+      if (gamesSet.size < maxFarmIdlers) {
         // Check if this is a GameWithRemainingDrops or a Game
         const isGameWithDrops = 'remaining' in gameData && 'id' in gameData
         const gameId = isGameWithDrops ? Number(gameData.id) : Number(gameData.appid)
@@ -261,12 +282,13 @@ const processIndividualGames = async (
   userSummary: UserSummary,
   credentials: CardFarmingSettings['credentials'],
   blacklist: number[],
+  maxFarmIdlers: number,
 ) => {
   let totalDrops = 0
   const TIMEOUT = 30000
 
   const checkGame = async (gameData: Game) => {
-    if (gamesSet.size >= 32) return
+    if (gamesSet.size >= maxFarmIdlers) return
 
     // Skip if game is blacklisted
     if (blacklist.includes(gameData.appid)) {
@@ -331,6 +353,7 @@ export const beginFarmingCycle = async (
   gamesSet: Set<GameWithDrops>,
   isMountedRef: React.RefObject<boolean>,
   abortControllerRef: React.RefObject<AbortController>,
+  maxFarmIdlers = DEFAULT_MAX_FARM_IDLERS,
 ) => {
   const delays = {
     farming: 60000 * 30,
@@ -369,10 +392,10 @@ export const beginFarmingCycle = async (
           gamesSet = await checkDropsRemaining(gamesSet)
 
           // Check if we should add more games to the list
-          if (gamesSet.size < 32) {
-            const { gamesSet: refreshedSet } = await checkGamesForDrops()
+          if (gamesSet.size < maxFarmIdlers) {
+            const { gamesSet: refreshedSet } = await checkGamesForDrops(maxFarmIdlers)
             for (const game of refreshedSet) {
-              if (gamesSet.size >= 32) break
+              if (gamesSet.size >= maxFarmIdlers) break
               if (![...gamesSet].some(g => g.appid === game.appid)) {
                 gamesSet.add(game)
               }

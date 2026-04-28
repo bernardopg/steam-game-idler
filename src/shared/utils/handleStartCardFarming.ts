@@ -1,5 +1,4 @@
 import type { InvokeCustomList, InvokeSettings, InvokeValidateSession } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import {
   showDangerToast,
@@ -15,6 +14,7 @@ import {
   hasGamerFeature,
   logEvent,
 } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const startCardFarming = async () => {
   const { userSettings, userSummary, proTier, setUserSettings } = useUserStore.getState()

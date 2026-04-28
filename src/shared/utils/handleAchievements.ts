@@ -6,10 +6,10 @@ import type {
   InvokeStatUpdate,
   StatValue,
 } from '@/shared//types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 // Unlock a single achievement for a game
 export async function unlockAchievement(

@@ -1,10 +1,10 @@
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, useDisclosure } from '@heroui/react'
 import { CustomModal } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { checkSteamStatus } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const SteamWarning = () => {
   const { t } = useTranslation()

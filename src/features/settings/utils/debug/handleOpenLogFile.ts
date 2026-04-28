@@ -1,7 +1,7 @@
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast } from '@/shared/components'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleOpenLogFile = async () => {
   try {

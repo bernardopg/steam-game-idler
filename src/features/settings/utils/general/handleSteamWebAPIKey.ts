@@ -1,8 +1,8 @@
 import type { InvokeSettings, InvokeValidateKey, UserSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { encrypt, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleSteamWebAPIKeySave = async (
   steamId: string | undefined,

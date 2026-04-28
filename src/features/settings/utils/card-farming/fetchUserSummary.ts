@@ -1,6 +1,6 @@
 import type { InvokeUserSummary } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { decrypt } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const fetchUserSummary = async (steamId: string, apiKey: string | null) => {
   const res = await invoke<InvokeUserSummary>('get_user_summary', {

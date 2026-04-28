@@ -22,6 +22,19 @@ You must have the **[Steam client](https://store.steampowered.com/about)** insta
 
 Or if you prefer, you can **[build it yourself](https://steamgameidler.com/docs/get-started/build-it-yourself)**
 
+# Linux Development
+This fork includes a Linux development path that uses the sibling `steam-utility-multiplataform` repository.
+
+From the parent `SGI` workspace:
+
+```bash
+./steam-game-idler/scripts/dev-linux.sh
+```
+
+The script resolves `SteamUtility.Cli`, clears stale dev/runtime state, and runs Tauri with `next dev --webpack`. Webpack is used for the Tauri dev WebView because Turbopack/HMR was unstable with WebKitGTK during card farming validation.
+
+Card farming on Linux intentionally limits concurrent Steam API idlers to reduce Steam IPC pressure.
+
 # Features
 Refer to the **[documentation](https://steamgameidler.com/docs/)** for a detailed guide on each feature
 

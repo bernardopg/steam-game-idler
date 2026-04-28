@@ -38,7 +38,7 @@ pub async fn get_games_list(
 
     let exe_path = get_lib_path()?;
     let mut command = std::process::Command::new(exe_path);
-    command.args(["check_ownership", &temp_games_file_str]);
+    command.args(["check_ownership", "--json", &temp_games_file_str]);
     let output = apply_hidden_command_style(&mut command)
         .output()
         .map_err(|e| format!("Failed to execute check_ownership: {}", e))?;
@@ -73,7 +73,11 @@ pub async fn get_games_list(
         .as_array()
         .ok_or_else(|| "Did not return games array".to_string())?;
 
-    let key = api_key.unwrap_or_else(|| std::env::var("KEY").unwrap());
+    let key = api_key.unwrap_or_else(|| {
+        std::env::var("KEY")
+            .or_else(|_| std::env::var("STEAM_API_KEY"))
+            .unwrap_or_default()
+    });
 
     let url = format!(
         "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={}&steamid={}&include_appinfo=true&include_played_free_games=true&include_free_sub=true&skip_unvetted_apps=false&include_extended_appinfo=false",
@@ -155,7 +159,11 @@ pub async fn get_recent_games(
     api_key: Option<String>,
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
-    let key = api_key.unwrap_or_else(|| std::env::var("KEY").unwrap());
+    let key = api_key.unwrap_or_else(|| {
+        std::env::var("KEY")
+            .or_else(|_| std::env::var("STEAM_API_KEY"))
+            .unwrap_or_default()
+    });
 
     let url = format!(
         "https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={}&steamid={}&count=4",
@@ -177,8 +185,8 @@ pub async fn get_recent_games(
         }));
     }
 
-    let mut file = File::open(&file_path)
-        .map_err(|e| format!("Failed to open games list file: {}", e))?;
+    let mut file =
+        File::open(&file_path).map_err(|e| format!("Failed to open games list file: {}", e))?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .map_err(|e| format!("Failed to read games list file: {}", e))?;
@@ -206,8 +214,8 @@ pub async fn get_games_list_cache(
         }));
     }
 
-    let mut file = File::open(&file_path)
-        .map_err(|e| format!("Failed to open games list file: {}", e))?;
+    let mut file =
+        File::open(&file_path).map_err(|e| format!("Failed to open games list file: {}", e))?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .map_err(|e| format!("Failed to read games list file: {}", e))?;

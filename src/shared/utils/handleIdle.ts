@@ -7,7 +7,6 @@ import type {
   InvokeSettings,
   UserSummary,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import {
   showAccountMismatchToast,
@@ -16,6 +15,7 @@ import {
   showWarningToast,
 } from '@/shared/components'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 const idleTimeouts: { [key: number]: ReturnType<typeof setTimeout> } = {}
 const idleIntervals: { [key: number]: ReturnType<typeof setTimeout> } = {}

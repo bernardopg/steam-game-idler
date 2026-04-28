@@ -42,7 +42,10 @@ next-env.d.ts
 src-tauri/target
 src-tauri/libs
 src-tauri/gen
+src-tauri/steam_appid.txt
 .window-state.json
+/tmp/
+/cache/
 
 # rust-analyzer
 target

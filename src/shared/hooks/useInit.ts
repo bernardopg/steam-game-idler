@@ -1,10 +1,11 @@
 import type { UserSummary } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { emit } from '@tauri-apps/api/event'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLoaderStore, useStateStore, useUserStore } from '@/shared/stores'
+import { isTauri } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useInit() {
   const setLoadingUserSummary = useStateStore(state => state.setLoadingUserSummary)
@@ -15,6 +16,7 @@ export function useInit() {
   console.debug('Monitor for rerenders')
 
   useEffect(() => {
+    if (!isTauri()) return
     // Emit ready event to backend
     emit('ready')
     // Start the Steam status monitor once globally
@@ -24,6 +26,7 @@ export function useInit() {
   }, [])
 
   useEffect(() => {
+    if (!isTauri()) return
     invoke('update_tray_menu', {
       show: t('tray.show'),
       update: t('tray.update'),
@@ -48,6 +51,7 @@ export function useInit() {
   }, [setUserSummary, setLoadingUserSummary, hideLoader])
 
   useEffect(() => {
+    if (!isTauri()) return
     const closeWebview = async () => {
       try {
         const webview = await WebviewWindow.getByLabel('webview')

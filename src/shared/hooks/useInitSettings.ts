@@ -1,7 +1,7 @@
 import type { InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect } from 'react'
 import { useUserStore } from '@/shared/stores'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export function useInitSettings() {
   const userSummary = useUserStore(state => state.userSummary)
@@ -9,6 +9,8 @@ export function useInitSettings() {
 
   useEffect(() => {
     const getAndSetUserSettings = async () => {
+      if (!isTauri()) return
+
       if (userSummary) {
         const response = await invoke<InvokeSettings>('get_user_settings', {
           steamId: userSummary.steamId,

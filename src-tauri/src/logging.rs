@@ -1,7 +1,7 @@
 use crate::utils::get_cache_dir;
 use chrono::Local;
 use std::fs::{create_dir_all, OpenOptions};
-use std::io::{BufRead, BufReader, Seek, SeekFrom, Write};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 
 const MAX_LINES: usize = 500;
 
@@ -49,16 +49,38 @@ pub fn log_event(message: String, app_handle: tauri::AppHandle) -> Result<(), St
 #[tauri::command]
 pub fn clear_log_file(app_handle: tauri::AppHandle) -> Result<(), String> {
     let app_data_dir = get_cache_dir(&app_handle)?;
-    // Open the log file
+    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
+
     let log_file_path = app_data_dir.join("log.txt");
     let file = OpenOptions::new()
         .write(true)
+        .create(true)
         .open(&log_file_path)
         .map_err(|e| format!("Failed to open log file: {}", e))?;
-    // Truncate the log file
+
     file.set_len(0)
         .map_err(|e| format!("Failed to truncate file: {}", e))?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn read_log_file(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let app_data_dir = get_cache_dir(&app_handle)?;
+    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
+
+    let log_file_path = app_data_dir.join("log.txt");
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&log_file_path)
+        .map_err(|e| format!("Failed to open log file: {}", e))?;
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .map_err(|e| format!("Failed to read log file: {}", e))?;
+
+    Ok(contents)
 }
 
 pub fn mask_sensitive_data(message: &str, sensitive_data: &str) -> String {

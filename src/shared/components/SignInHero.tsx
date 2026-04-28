@@ -65,6 +65,7 @@ export const SignInHero = () => {
           alt='app mockup'
           width={730}
           height={380}
+          loading='eager'
           className='mt-10 -translate-x-3'
         />
       </div>

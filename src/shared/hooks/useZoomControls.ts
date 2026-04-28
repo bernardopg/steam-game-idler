@@ -1,8 +1,8 @@
-import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showDangerToast } from '@/shared/components'
-import { logEvent } from '@/shared/utils'
+import { isTauri, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useZoomControls() {
   const { t } = useTranslation()
@@ -10,6 +10,7 @@ export function useZoomControls() {
 
   // Set initial zoom level from localStorage
   useEffect(() => {
+    if (!isTauri()) return
     const storedZoom = localStorage.getItem('zoomLevel')
     if (storedZoom) {
       const parsedZoom = parseFloat(storedZoom)
@@ -75,11 +76,15 @@ export function useZoomControls() {
   )
 
   useEffect(() => {
+    if (!isTauri()) return
+
     document.addEventListener('keydown', handleZoomControls, { capture: true })
     return () => document.removeEventListener('keydown', handleZoomControls, { capture: true })
   }, [handleZoomControls])
 
   useEffect(() => {
+    if (!isTauri()) return
+
     document.addEventListener('wheel', handleWheelZoom, { passive: false })
     return () => document.removeEventListener('wheel', handleWheelZoom)
   }, [handleWheelZoom])

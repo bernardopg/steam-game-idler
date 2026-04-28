@@ -1,11 +1,11 @@
 import type { InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { showDangerToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
-import { hasCasualFeature, logEvent } from '@/shared/utils'
+import { hasCasualFeature, isTauri, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useThemes() {
   const { t } = useTranslation()
@@ -24,7 +24,7 @@ export function useThemes() {
         let userTheme = 'dark'
 
         // Get user settings if available
-        if (hasCasualFeature(proTier)) {
+        if (hasCasualFeature(proTier) && isTauri()) {
           const cachedUserSettings = await invoke<InvokeSettings>('get_user_settings', {
             steamId: userSummary.steamId,
           })

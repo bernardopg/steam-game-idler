@@ -17,9 +17,25 @@ if [[ ! -x "$SGI_STEAM_UTILITY_PATH" ]]; then
 fi
 
 if [[ ! -f "$REPO_ROOT/.env.dev" ]]; then
-  echo 'KEY=""' > "$REPO_ROOT/.env.dev"
+  echo 'STEAM_API_KEY=""' > "$REPO_ROOT/.env.dev"
   echo "Created placeholder .env.dev at $REPO_ROOT/.env.dev" >&2
 fi
+
+pkill -TERM -f "$SGI_STEAM_UTILITY_PATH idle" 2>/dev/null || true
+sleep 1
+pkill -KILL -f "$SGI_STEAM_UTILITY_PATH idle" 2>/dev/null || true
+rm -rf /tmp/steam-game-idler
+
+# Avoid stale Turbopack chunks in the Tauri WebView after backend rebuilds
+# or interrupted dev sessions.
+rm -rf "$REPO_ROOT/.next/dev"
+
+# Export env vars from .env.dev into the process so Rust can use them at runtime
+# as fallback when no API key is configured in app Settings.
+set -o allexport
+# shellcheck disable=SC1090
+source "$REPO_ROOT/.env.dev" 2>/dev/null || true
+set +o allexport
 
 cd "$REPO_ROOT"
 exec pnpm tauri dev

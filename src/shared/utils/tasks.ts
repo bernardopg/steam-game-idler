@@ -7,7 +7,6 @@ import type {
   UserSummary,
 } from '@/shared/types'
 import { getVersion } from '@tauri-apps/api/app'
-import { invoke } from '@tauri-apps/api/core'
 import { TrayIcon } from '@tauri-apps/api/tray'
 import {
   isPermissionGranted,
@@ -23,6 +22,7 @@ import {
   showIncorrectCredentialsToast,
   showSteamNotRunningToast,
 } from '@/shared/components'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export async function checkSteamStatus(showToast: boolean) {
   try {
@@ -213,6 +213,7 @@ export const preserveKeysAndClearData = async () => {
 
 // Get the app version
 export const getAppVersion = async () => {
+  if (!isTauri()) return undefined
   try {
     const appVersion = await getVersion()
     return appVersion
@@ -225,6 +226,7 @@ export const getAppVersion = async () => {
 
 // Log event
 export async function logEvent(message: string) {
+  if (!isTauri()) return
   try {
     const version = await getVersion()
     await invoke('log_event', { message: `[v${version}] ${message}` })
@@ -292,6 +294,7 @@ export async function updateTrayIcon(tooltip?: string, runningStatus?: boolean) 
 }
 
 export async function isPortableCheck() {
+  if (!isTauri()) return false
   try {
     const portable = await invoke<boolean>('is_portable')
     return portable
@@ -305,6 +308,8 @@ export async function isPortableCheck() {
 // Send a native notification
 export async function sendNativeNotification(title: string, body: string) {
   try {
+    if (!isTauri() || (await invoke<boolean>('is_dev'))) return
+
     let permissionGranted = await isPermissionGranted()
 
     // Request permission if not granted
@@ -314,7 +319,7 @@ export async function sendNativeNotification(title: string, body: string) {
     }
 
     if (permissionGranted) {
-      sendNotification({ title, body })
+      await sendNotification({ title, body })
     }
   } catch (error) {
     showDangerToast(i18next.t('common.error'))

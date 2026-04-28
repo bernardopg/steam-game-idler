@@ -8,7 +8,6 @@ import type {
   UserSummary,
 } from '@/shared/types'
 import type { TimeInputValue } from '@heroui/react'
-import { invoke } from '@tauri-apps/api/core'
 import { showAccountMismatchToast } from '@/shared/components'
 import {
   isWithinSchedule,
@@ -18,6 +17,7 @@ import {
   stopIdle,
   unlockAchievement,
 } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 interface AchievementToUnlock {
   appId: number

@@ -1,10 +1,10 @@
 import type { InvokeUsers, InvokeUserSummary, UserSummary } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showAccountMismatchToast, showDangerToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
-import { checkSteamStatus, decrypt, logEvent } from '@/shared/utils'
+import { checkSteamStatus, decrypt, isTauri, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useSignIn(refreshKey: number) {
   const { t } = useTranslation()
@@ -40,6 +40,13 @@ export function useSignIn(refreshKey: number) {
     // Get all steam users
     const getSteamUsers = async () => {
       setIsLoading(true)
+
+      if (!isTauri()) {
+        setSteamUsers([])
+        setUserSummaries([])
+        setIsLoading(false)
+        return
+      }
 
       // Simulate loading time for better UX
       // await new Promise(resolve => setTimeout(resolve, 1000))

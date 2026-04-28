@@ -73,8 +73,7 @@
         "decorations": false,
         "transparent": true,
         "focus": false,
-        "visible": false,
-        "useHttpsScheme": true
+        "visible": false
       },
       {
         "title": "Webview Window",

@@ -1,10 +1,10 @@
-import { invoke } from '@tauri-apps/api/core'
 import { useTranslation } from 'react-i18next'
 import { TbFolders } from 'react-icons/tb'
 import { Button } from '@heroui/react'
 import { showDangerToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const OpenSettings = () => {
   const { t } = useTranslation()

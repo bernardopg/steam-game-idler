@@ -1,3 +1,5 @@
+// next.config.mjs takes precedence at runtime when both files exist.
+// This file is kept in sync so either one works as the canonical config.
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {

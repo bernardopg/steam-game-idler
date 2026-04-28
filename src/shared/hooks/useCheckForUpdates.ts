@@ -1,11 +1,17 @@
-import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showDangerToast } from '@/shared/components'
 import { useUpdateStore } from '@/shared/stores'
-import { fetchLatest, isPortableCheck, logEvent, preserveKeysAndClearData } from '@/shared/utils'
+import {
+  fetchLatest,
+  isPortableCheck,
+  isTauri,
+  logEvent,
+  preserveKeysAndClearData,
+} from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useCheckForUpdates() {
   const { t } = useTranslation()
@@ -15,6 +21,7 @@ export function useCheckForUpdates() {
   useEffect(() => {
     // Check for updates - immediate update for major, or show notification
     const checkForUpdates = async () => {
+      if (!isTauri()) return
       try {
         const isPortable = await isPortableCheck()
         if (isPortable) return

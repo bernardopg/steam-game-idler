@@ -2,6 +2,7 @@ export * from './handleAchievements'
 export * from './handleAutomation'
 export * from './handleIdle'
 export * from './tasks'
+export * from './tauri'
 export * from './handleStartAutoIdleGames'
 export * from './handleCheckForFreeGames'
 

@@ -7,7 +7,7 @@ import { Button, cn } from '@heroui/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CustomTooltip } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
-import { isPortableCheck } from '@/shared/utils'
+import { isPortableCheck, isTauri } from '@/shared/utils'
 
 declare global {
   interface Window {
@@ -100,6 +100,7 @@ export const HelpDesk = () => {
 
   useEffect(() => {
     const setUserData = async () => {
+      if (!isTauri()) return
       const version = await getVersion()
       const isPortable = await isPortableCheck()
 

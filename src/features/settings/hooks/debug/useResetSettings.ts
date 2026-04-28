@@ -1,10 +1,10 @@
 import type { InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useTranslation } from 'react-i18next'
 import { useDisclosure } from '@heroui/react'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useResetSettings() {
   const { t } = useTranslation()

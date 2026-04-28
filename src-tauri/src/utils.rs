@@ -166,14 +166,25 @@ pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<
 
     #[cfg(all(unix, not(target_os = "macos")))]
     {
+        // Open the parent directory (shows it in the file manager).
+        // xdg-open cannot highlight a specific file, so we always open the
+        // containing folder — this avoids "file does not exist" errors when
+        // the target file hasn't been created yet (e.g. log.txt on first run).
         let path_to_open = if target_path.is_file() {
-            target_path.parent().unwrap_or(&target_path)
+            target_path.parent().unwrap_or(&target_path).to_path_buf()
+        } else if target_path.is_dir() {
+            target_path.clone()
         } else {
-            &target_path
+            // File/dir doesn't exist — open nearest existing ancestor
+            target_path
+                .ancestors()
+                .find(|p| p.exists())
+                .map(|p| p.to_path_buf())
+                .unwrap_or(target_path.clone())
         };
 
         std::process::Command::new("xdg-open")
-            .arg(path_to_open)
+            .arg(&path_to_open)
             .spawn()
             .map_err(|e| e.to_string())?;
     }

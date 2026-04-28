@@ -1,9 +1,9 @@
 import type { Achievement, InvokeAchievementData, InvokeAchievementUnlock } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showAccountMismatchToast, showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleLockSelectedAchievements = async (
   appId: number,

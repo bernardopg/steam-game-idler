@@ -1,5 +1,4 @@
 import type { InvokeKillProcess } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbPlayerStopFilled } from 'react-icons/tb'
@@ -7,6 +6,7 @@ import { Button, cn } from '@heroui/react'
 import { GameCard, showDangerToast, showSuccessToast } from '@/shared/components'
 import { useIdleStore, useStateStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const IdlingGamesList = () => {
   const { t } = useTranslation()

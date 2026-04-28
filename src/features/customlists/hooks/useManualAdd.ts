@@ -1,10 +1,10 @@
 import type { Game, InvokeCustomList } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showDangerToast, showWarningToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useManualAdd(
   listName: string,

@@ -1,5 +1,5 @@
 import type { InvokeSettings, UserSettings, UserSummary } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleSellOptionChange = async (
   key: string,

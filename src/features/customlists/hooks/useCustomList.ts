@@ -1,8 +1,8 @@
 import type { Game, InvokeCustomList, InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useRef, useState } from 'react'
 import { showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useCustomList(listName: string) {
   const isAchievementUnlocker = useStateStore(state => state.isAchievementUnlocker)

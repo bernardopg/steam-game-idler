@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { Trans, useTranslation } from 'react-i18next'
 import { SiSteam, SiSteamdb } from 'react-icons/si'
 import { TbAlertHexagonFilled, TbFoldersFilled, TbX } from 'react-icons/tb'
@@ -6,6 +5,7 @@ import { Alert, Button, cn } from '@heroui/react'
 import { CustomTooltip, ExtLink, showDangerToast } from '@/shared/components'
 import { useNavigationStore, useSearchStore, useStateStore, useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 interface PageHeaderProps {
   protectedAchievements: boolean

@@ -1,7 +1,7 @@
 import type { GameSettings, GameSpecificSettings, InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useRef, useState } from 'react'
 import { useUserStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 interface UseGameSettingsProps {
   appId?: number | string

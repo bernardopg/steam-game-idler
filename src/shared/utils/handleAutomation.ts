@@ -1,9 +1,9 @@
 import type { InvokeDropsRemaining, InvokeGamesWithDrops } from '@/shared/types'
 import type { TimeInputValue } from '@heroui/react'
 import { Time } from '@internationalized/date'
-import { invoke } from '@tauri-apps/api/core'
 import { showMissingCredentialsToast } from '@/shared/components'
 import { decrypt, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 // Check remaining card drops for a game
 export async function checkDrops(

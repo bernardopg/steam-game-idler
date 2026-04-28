@@ -1,6 +1,6 @@
 import type { InvokeSettings, UserSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useUserStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleBackgroundSave = async (
   e: React.ChangeEvent<HTMLInputElement>,

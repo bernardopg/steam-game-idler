@@ -1,5 +1,4 @@
 import type { InvokeSteamCredentials } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { Trans, useTranslation } from 'react-i18next'
 import { TbChevronRight, TbEraser, TbUpload } from 'react-icons/tb'
 import { Button, cn, Divider, Input, Spinner, useDisclosure } from '@heroui/react'
@@ -13,6 +12,7 @@ import { handleSaveCredentials } from '@/features/settings/utils/steam-credentia
 import { CustomModal, ExtLink, ProBadge, showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { hasGamerFeature, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const SteamCredentials = () => {
   const { t } = useTranslation()

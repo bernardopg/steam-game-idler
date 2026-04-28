@@ -1,10 +1,10 @@
 import type { Achievement, InvokeAchievementData, Statistic } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showAccountMismatchToast, showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useAchievements(
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,

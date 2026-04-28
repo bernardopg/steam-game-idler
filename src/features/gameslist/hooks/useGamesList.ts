@@ -1,10 +1,10 @@
 import type { Game, InvokeGamesList, SortStyleValue } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showDangerToast, showPrimaryToast } from '@/shared/components'
 import { useSearchStore, useUserStore } from '@/shared/stores'
 import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useGamesList() {
   const { t } = useTranslation()

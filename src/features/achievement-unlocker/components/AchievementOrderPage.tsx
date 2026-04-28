@@ -1,6 +1,5 @@
 import type { Achievement, InvokeAchievementData } from '@/shared/types'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { invoke } from '@tauri-apps/api/core'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GoGrabber } from 'react-icons/go'
@@ -15,6 +14,7 @@ import Image from 'next/image'
 import { ExtLink, showAccountMismatchToast, showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 interface SortableAchievementProps {
   appid: number

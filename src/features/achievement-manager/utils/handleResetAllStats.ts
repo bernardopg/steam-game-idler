@@ -4,11 +4,11 @@ import type {
   InvokeResetStats,
   Statistic,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { checkSteamStatus } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleResetAllStats = async (
   statistics: Statistic[],

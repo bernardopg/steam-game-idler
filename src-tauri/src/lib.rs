@@ -102,6 +102,7 @@ pub fn run() {
             reset_all_stats,
             log_event,
             clear_log_file,
+            read_log_file,
             get_user_summary,
             get_user_summary_cache,
             delete_user_summary_file,
@@ -165,6 +166,8 @@ pub fn run() {
 }
 
 fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    idling::cleanup_idle_work_root();
+
     let app_handle = app.handle();
     setup_window(&app_handle)?;
     setup_tray_icon(app)?;
@@ -189,12 +192,16 @@ fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error:
                 Ok(should_start_minimized) => {
                     // If start minimized is enabled, keep the window hidden
                     if !should_start_minimized {
-                        window_for_async.show().unwrap();
+                        let _ = window_for_async.unminimize();
+                        let _ = window_for_async.show();
+                        let _ = window_for_async.set_focus();
                     }
                 }
                 Err(_) => {
                     // If we can't check the setting, default to showing the window
-                    window_for_async.show().unwrap();
+                    let _ = window_for_async.unminimize();
+                    let _ = window_for_async.show();
+                    let _ = window_for_async.set_focus();
                 }
             }
         });
@@ -235,8 +242,9 @@ fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
             } => {
                 let app = tray.app_handle();
                 if let Some(window) = app.get_webview_window("main") {
-                    window.show().unwrap();
-                    window.set_focus().unwrap();
+                    let _ = window.unminimize();
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
             }
             _ => {}
@@ -244,8 +252,9 @@ fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
-                    window.show().unwrap();
-                    window.set_focus().unwrap();
+                    let _ = window.unminimize();
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
             }
             "update" => {

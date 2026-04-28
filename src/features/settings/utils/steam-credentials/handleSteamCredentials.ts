@@ -6,7 +6,6 @@ import type {
   UserSettings,
   UserSummary,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { fetchGamesWithDropsData, fetchUserSummary } from '@/features/settings'
 import {
@@ -16,6 +15,7 @@ import {
   showSuccessToast,
 } from '@/shared/components'
 import { encrypt, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleSaveCredentials = async (
   sidValue: string,

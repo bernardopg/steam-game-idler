@@ -1,5 +1,6 @@
 use crate::idling::SPAWNED_PROCESSES;
 use serde_json::{json, Value};
+use std::fs;
 use std::time::Duration;
 use tauri::Emitter;
 
@@ -116,6 +117,8 @@ pub async fn kill_process_by_pid(pid: u32) -> Result<Value, String> {
     if let Some(position) = processes.iter().position(|process| process.pid == pid) {
         let mut process = processes.remove(position);
         process.child.kill().map_err(|e| e.to_string())?;
+        let _ = process.child.wait();
+        let _ = fs::remove_dir_all(&process.work_dir);
         return Ok(json!({"success": "Successfully killed process with PID"}));
     }
 
@@ -134,6 +137,8 @@ pub async fn kill_all_steamutil_processes() -> Result<Value, String> {
     let mut killed_count = 0;
     for process in processes.iter_mut() {
         if process.child.kill().is_ok() {
+            let _ = process.child.wait();
+            let _ = fs::remove_dir_all(&process.work_dir);
             killed_count += 1;
         }
     }
@@ -151,12 +156,14 @@ pub fn cleanup_dead_processes() -> Result<(), String> {
     while i < processes.len() {
         if let Ok(status) = processes[i].child.try_wait() {
             if status.is_some() {
-                processes.remove(i);
+                let process = processes.remove(i);
+                let _ = fs::remove_dir_all(&process.work_dir);
             } else {
                 i += 1;
             }
         } else {
-            processes.remove(i);
+            let process = processes.remove(i);
+            let _ = fs::remove_dir_all(&process.work_dir);
         }
     }
     Ok(())

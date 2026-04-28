@@ -6,7 +6,6 @@ import type {
   InvokeValidateSession,
   TradingCard,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -19,6 +18,7 @@ import {
 } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useTradingCardsList() {
   const { t } = useTranslation()

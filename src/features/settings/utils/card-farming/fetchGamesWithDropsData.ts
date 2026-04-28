@@ -5,10 +5,10 @@ import type {
   UserSettings,
   UserSummary,
 } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showOutdatedCredentialsToast } from '@/shared/components'
 import { decrypt, getAllGamesWithDrops, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const fetchGamesWithDropsData = async (
   userSummary: UserSummary,

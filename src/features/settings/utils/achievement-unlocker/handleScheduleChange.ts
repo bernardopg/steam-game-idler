@@ -1,9 +1,9 @@
 import type { InvokeSettings, UserSettings, UserSummary } from '@/shared/types'
 import type { TimeInputValue } from '@heroui/react'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast } from '@/shared/components'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleScheduleChange = async (
   value: TimeInputValue | null,

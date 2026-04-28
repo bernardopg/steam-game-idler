@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { TbArrowRight } from 'react-icons/tb'
@@ -7,6 +6,7 @@ import Image from 'next/image'
 import { ExtLink, LanguageSwitch, SignInHero } from '@/shared/components'
 import { useSignIn } from '@/shared/hooks'
 import { useNavigationStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 export const SignIn = () => {
   const { t } = useTranslation()

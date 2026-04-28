@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import { useEffect, useState } from 'react'
@@ -23,6 +22,7 @@ import {
   openExternalLink,
   preserveKeysAndClearData,
 } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const Menu = () => {
   const { t } = useTranslation()

@@ -1,8 +1,8 @@
 import type { InvokeCustomList, InvokeRunningProcess, UserSummary } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showNoGamesToast } from '@/shared/components'
 import { checkSteamStatus, logEvent, startIdle } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const startAutoIdleGames = async () => {
   try {

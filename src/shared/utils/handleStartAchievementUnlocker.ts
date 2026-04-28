@@ -1,9 +1,9 @@
 import type { InvokeCustomList } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showNoGamesToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { checkSteamStatus, logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const startAchievementUnlocker = async () => {
   const { userSummary } = useUserStore.getState()

@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import {
   isPermissionGranted,
@@ -6,6 +5,7 @@ import {
   sendNotification,
 } from '@tauri-apps/plugin-notification'
 import { useUserStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 export function useTitlebar() {
   const userSettings = useUserStore(state => state.userSettings)
@@ -27,21 +27,27 @@ export function useTitlebar() {
 
     await getCurrentWindow().hide()
 
-    const minToTrayNotified = localStorage.getItem('minToTrayNotified') || 'false'
-    let permissionGranted = await isPermissionGranted()
-    if (minToTrayNotified !== 'true') {
-      if (!permissionGranted) {
-        const permission = await requestPermission()
-        permissionGranted = permission === 'granted'
+    try {
+      if (await invoke<boolean>('is_dev')) return
+
+      const minToTrayNotified = localStorage.getItem('minToTrayNotified') || 'false'
+      let permissionGranted = await isPermissionGranted()
+      if (minToTrayNotified !== 'true') {
+        if (!permissionGranted) {
+          const permission = await requestPermission()
+          permissionGranted = permission === 'granted'
+        }
+        if (permissionGranted) {
+          await sendNotification({
+            title: 'Steam Game Idler will continue to run in the background',
+            icon: 'icons/32x32.png',
+          })
+        }
       }
-      if (permissionGranted) {
-        sendNotification({
-          title: 'Steam Game Idler will continue to run in the background',
-          icon: 'icons/32x32.png',
-        })
-      }
+      localStorage.setItem('minToTrayNotified', 'true')
+    } catch (error) {
+      console.error('Failed to send close-to-tray notification:', error)
     }
-    localStorage.setItem('minToTrayNotified', 'true')
   }
 
   return {

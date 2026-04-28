@@ -1,5 +1,4 @@
 import type { UserSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { arch, locale, version } from '@tauri-apps/plugin-os'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBarUp } from 'react-icons/tb'
@@ -7,6 +6,7 @@ import { Button } from '@heroui/react'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { getAppVersion } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 interface SystemType {
   version: string

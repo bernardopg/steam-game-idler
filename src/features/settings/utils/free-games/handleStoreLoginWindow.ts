@@ -1,9 +1,9 @@
 import type { InvokeSettings, InvokeSteamCredentials, UserSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleShowStoreLoginWindow = async (
   setUserSettings: (value: UserSettings | ((prev: UserSettings) => UserSettings)) => void,

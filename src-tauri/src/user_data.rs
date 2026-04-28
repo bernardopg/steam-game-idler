@@ -58,7 +58,11 @@ pub async fn get_user_summary(
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
     // Get the API key from the env or use the provided one
-    let key = api_key.unwrap_or_else(|| std::env::var("KEY").unwrap());
+    let key = api_key.unwrap_or_else(|| {
+        std::env::var("KEY")
+            .or_else(|_| std::env::var("STEAM_API_KEY"))
+            .unwrap_or_default()
+    });
     let url = format!(
         "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={}&steamids={}",
         key, steam_id

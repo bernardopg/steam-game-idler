@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import { useState } from 'react'
@@ -7,6 +6,7 @@ import { TbCircleArrowDown } from 'react-icons/tb'
 import { Spinner } from '@heroui/react'
 import { CustomTooltip, showDangerToast } from '@/shared/components'
 import { logEvent } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 export const UpdateButton = () => {
   const { t } = useTranslation()

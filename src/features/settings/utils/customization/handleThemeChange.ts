@@ -1,6 +1,6 @@
 import type { InvokeSettings } from '@/shared/types'
-import { invoke } from '@tauri-apps/api/core'
 import { useUserStore } from '@/shared/stores'
+import { invoke } from '@/shared/utils/tauri'
 
 export const handleThemeChange = async (
   themeKey: string,

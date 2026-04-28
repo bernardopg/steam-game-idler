@@ -6,7 +6,6 @@ import type {
   UserSummary,
 } from '@/shared/types'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { invoke } from '@tauri-apps/api/core'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbAward, TbCards, TbEdit, TbHeart, TbHourglassLow, TbSettings } from 'react-icons/tb'
@@ -24,6 +23,7 @@ import {
   startAutoIdleGamesImpl,
   startCardFarming,
 } from '@/shared/utils'
+import { invoke } from '@/shared/utils/tauri'
 
 type CustomListType =
   | 'cardFarmingList'
