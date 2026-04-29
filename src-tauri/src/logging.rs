@@ -1,16 +1,31 @@
-use crate::utils::get_cache_dir;
+use crate::utils::{get_cache_dir, get_user_data_dir};
 use chrono::Local;
-use std::fs::{create_dir_all, OpenOptions};
+use std::fs::{copy, create_dir_all, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
+use std::path::PathBuf;
 
 const MAX_LINES: usize = 500;
 
+fn get_log_file_path(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let app_data_dir = get_user_data_dir(app_handle)?;
+    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
+
+    let log_file_path = app_data_dir.join("log.txt");
+    if !log_file_path.exists() {
+        let legacy_log_file_path = get_cache_dir(app_handle)?.join("log.txt");
+
+        if legacy_log_file_path.exists() && legacy_log_file_path != log_file_path {
+            copy(&legacy_log_file_path, &log_file_path)
+                .map_err(|e| format!("Failed to migrate log file: {}", e))?;
+        }
+    }
+
+    Ok(log_file_path)
+}
+
 #[tauri::command]
 pub fn log_event(message: String, app_handle: tauri::AppHandle) -> Result<(), String> {
-    let app_data_dir = get_cache_dir(&app_handle)?;
-    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
-    // Open the log file
-    let log_file_path = app_data_dir.join("log.txt");
+    let log_file_path = get_log_file_path(&app_handle)?;
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -48,10 +63,7 @@ pub fn log_event(message: String, app_handle: tauri::AppHandle) -> Result<(), St
 
 #[tauri::command]
 pub fn clear_log_file(app_handle: tauri::AppHandle) -> Result<(), String> {
-    let app_data_dir = get_cache_dir(&app_handle)?;
-    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
-
-    let log_file_path = app_data_dir.join("log.txt");
+    let log_file_path = get_log_file_path(&app_handle)?;
     let file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -65,10 +77,7 @@ pub fn clear_log_file(app_handle: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub fn read_log_file(app_handle: tauri::AppHandle) -> Result<String, String> {
-    let app_data_dir = get_cache_dir(&app_handle)?;
-    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
-
-    let log_file_path = app_data_dir.join("log.txt");
+    let log_file_path = get_log_file_path(&app_handle)?;
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)

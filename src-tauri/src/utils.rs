@@ -139,13 +139,24 @@ pub async fn anti_away() -> Result<(), String> {
 
 #[tauri::command]
 pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let user_data_dir = get_user_data_dir(&app_handle)?;
     let cache_dir = get_cache_dir(&app_handle)?;
     let normalized_path = if std::path::MAIN_SEPARATOR == '\\' {
         path
     } else {
         path.replace('\\', &std::path::MAIN_SEPARATOR.to_string())
     };
-    let target_path = cache_dir.join(normalized_path);
+    let user_data_target = user_data_dir.join(&normalized_path);
+    let cache_target = cache_dir.join(&normalized_path);
+    let settings_suffix = format!("{}settings.json", std::path::MAIN_SEPARATOR);
+    let target_path = if normalized_path == "log.txt"
+        || normalized_path.ends_with(&settings_suffix)
+        || user_data_target.exists()
+    {
+        user_data_target
+    } else {
+        cache_target
+    };
 
     #[cfg(windows)]
     {
@@ -253,6 +264,21 @@ pub fn get_cache_dir(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf
             .app_data_dir()
             .map_err(|e| format!("Failed to get app data dir: {}", e))
             .map(|path| path.join("cache"))
+    }
+}
+
+// Get the directory for persistent user data such as settings and logs.
+// Portable builds keep using the exe-local cache directory for compatibility.
+// Installed builds store persistent data directly in app_data_dir so package
+// upgrades and cache cleanup do not remove credentials, API keys, or logs.
+pub fn get_user_data_dir(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    if is_portable() {
+        get_cache_dir(app_handle)
+    } else {
+        app_handle
+            .path()
+            .app_data_dir()
+            .map_err(|e| format!("Failed to get app data dir: {}", e))
     }
 }
 
