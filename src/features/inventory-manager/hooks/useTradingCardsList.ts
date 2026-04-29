@@ -89,6 +89,7 @@ export function useTradingCardsList() {
           }
           // Stale — delete so the fresh fetch below saves clean data
           await invoke('delete_user_trading_card_file', { steamId: userSummary?.steamId })
+          logEvent('[Inventory Manager] Stale trading card cache deleted')
         }
 
         // Validate credentials
@@ -684,6 +685,7 @@ export function useTradingCardsList() {
       await invoke('delete_user_trading_card_file', {
         steamId: userSummary?.steamId,
       })
+      logEvent('[Inventory Manager] Trading card cache deleted')
 
       setRefreshKey(prev => prev + 1)
     } catch (error) {

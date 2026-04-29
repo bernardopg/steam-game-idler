@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { ExtLink, LanguageSwitch, SignInHero } from '@/shared/components'
 import { useSignIn } from '@/shared/hooks'
 import { useNavigationStore } from '@/shared/stores'
+import { logEvent } from '@/shared/utils'
 import { invoke } from '@/shared/utils/tauri'
 
 export const SignIn = () => {
@@ -18,8 +19,14 @@ export const SignIn = () => {
   }, [setActivePage])
 
   const handleRefresh = async () => {
-    await invoke('delete_user_summary_file')
-    setRefreshKey(prev => prev + 1)
+    try {
+      await invoke('delete_user_summary_file')
+      logEvent('[Sign In] Cached user summaries deleted')
+      setRefreshKey(prev => prev + 1)
+    } catch (error) {
+      console.error('Error in (handleRefresh):', error)
+      logEvent(`[Error] in (handleRefresh): ${error}`)
+    }
   }
 
   return (

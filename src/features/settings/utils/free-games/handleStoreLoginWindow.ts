@@ -47,6 +47,7 @@ export const handleSignOutCurrentStoreUser = async (
     )
     return
   }
+  logEvent('[Settings - Free Games] Store cookies deleted')
 
   const response = await invoke<InvokeSettings>('update_user_settings', {
     steamId: userSummary?.steamId,
@@ -55,4 +56,5 @@ export const handleSignOutCurrentStoreUser = async (
   })
 
   setUserSettings(response.settings)
+  logEvent('[Settings - Free Games] Signed out current store user')
 }

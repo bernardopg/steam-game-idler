@@ -60,6 +60,7 @@ export const SteamCredentials = () => {
       )
       return
     }
+    logEvent('[Settings - Card Farming] Login window cookies deleted')
 
     handleClearCredentials(
       cardSettings.setHasCookies,
@@ -177,12 +178,13 @@ export const SteamCredentials = () => {
                   <div className='flex-col'>
                     <div className='flex justify-center items-center gap-3'>
                       <Image
-                        src={userSummary?.avatar || ''}
+                        src={userSummary?.avatar || '/fallback.webp'}
                         height={38}
                         width={38}
                         alt='user avatar'
                         className='w-9.5 h-9.5 rounded-full'
                         priority
+                        onError={handleImageError}
                       />
                       <div className='flex flex-col items-end gap-1'>
                         <div className='flex gap-1'>

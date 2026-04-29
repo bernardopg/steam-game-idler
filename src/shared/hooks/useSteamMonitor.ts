@@ -1,8 +1,8 @@
 import type { Game, InvokeRunningProcess } from '@/shared/types'
 import { listen } from '@tauri-apps/api/event'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useIdleStore, useStateStore, useUserStore } from '@/shared/stores'
-import { isTauri } from '@/shared/utils'
+import { isTauri, logEvent } from '@/shared/utils'
 import { invoke } from '@/shared/utils/tauri'
 
 export function useSteamMonitor() {
@@ -11,17 +11,23 @@ export function useSteamMonitor() {
   const setIsAchievementUnlocker = useStateStore(state => state.setIsAchievementUnlocker)
   const setShowSteamWarning = useStateStore(state => state.setShowSteamWarning)
   const setIdleGamesList = useIdleStore(state => state.setIdleGamesList)
+  const processSignatureRef = useRef('')
 
   // Listen for Steam status changes
   useEffect(() => {
     if (!isTauri()) return
+    logEvent('[Steam Monitor] Listening for Steam status changes')
     const unlistenPromise = listen<boolean>('steam_status_changed', event => {
       const isSteamRunning = event.payload
+      logEvent(`[Steam Monitor] Steam status changed: ${isSteamRunning ? 'running' : 'stopped'}`)
       if (!isSteamRunning && userSummary) {
         invoke('kill_all_steamutil_processes')
+          .then(() => logEvent('[Steam Monitor] SteamUtility processes killed'))
+          .catch(error => logEvent(`[Error] in (kill_all_steamutil_processes): ${error}`))
         setIsCardFarming(false)
         setIsAchievementUnlocker(false)
         setShowSteamWarning(true)
+        logEvent('[Steam Monitor] Stopped active Steam tasks after Steam closed')
       }
     })
 
@@ -33,9 +39,24 @@ export function useSteamMonitor() {
   // Listen for running processes changes
   useEffect(() => {
     if (!isTauri()) return
+    logEvent('[Steam Monitor] Listening for running process changes')
     const unlistenPromise = listen('running_processes_changed', event => {
       const response = event.payload as InvokeRunningProcess
-      const processes = response?.processes
+      const processes = response?.processes ?? []
+      const processSignature = processes.map(process => process.appid).join(',')
+      const previousProcessCount = processSignatureRef.current
+        ? processSignatureRef.current.split(',').length
+        : 0
+
+      if (processSignatureRef.current !== processSignature) {
+        const countChanged = previousProcessCount !== processes.length
+        logEvent(
+          countChanged
+            ? `[Steam Monitor] Running process count changed: ${processes.length}`
+            : '[Steam Monitor] Running process list changed',
+        )
+        processSignatureRef.current = processSignature
+      }
 
       setIdleGamesList((prevList: Game[]) => {
         if (prevList.length !== processes.length) {

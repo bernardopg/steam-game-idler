@@ -26,7 +26,7 @@ export function useSignIn(refreshKey: number) {
         return {
           steamId: player.steamid,
           personaName: player.personaname,
-          avatar: player.avatar.replace('.jpg', '_full.jpg'),
+          avatar: player.avatar?.replace('.jpg', '_full.jpg') ?? '',
           mostRecent: userData?.mostRecent ?? 0,
         }
       }
@@ -82,12 +82,14 @@ export function useSignIn(refreshKey: number) {
               if (cachedUserSummary) {
                 // Use cached data
                 const player = cachedUserSummary.response.players[0]
-                steamUsers.push({
-                  steamId: player.steamid,
-                  personaName: player.personaname,
-                  avatar: player.avatar.replace('.jpg', '_full.jpg'),
-                  mostRecent: user?.mostRecent ?? 0,
-                })
+                if (player) {
+                  steamUsers.push({
+                    steamId: player.steamid,
+                    personaName: player.personaname,
+                    avatar: player.avatar?.replace('.jpg', '_full.jpg') ?? '',
+                    mostRecent: user?.mostRecent ?? 0,
+                  })
+                }
               } else {
                 // Collect for API call
                 uncachedUsers.push(user)

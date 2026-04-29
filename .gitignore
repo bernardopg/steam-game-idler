@@ -53,3 +53,6 @@ src-tauri/steam_appid.txt
 target
 
 *.ps1
+
+.claude/
+.codex

@@ -113,6 +113,7 @@ Translations live under `src/i18n/locales/<locale>/`. The active locale is detec
 - Custom context menu (`Menu.popup()`) and native notifications are disabled in dev/Linux paths — guard these behind OS/dev checks before enabling.
 - Opening `localhost:3000` in a regular browser will throw `invoke is not a function` — the Tauri API is only injected inside the WebView.
 - Idle session concurrency cap: 8 on Linux, 32 on Windows (hard-coded in `idling.rs`).
+- AppImage builds on Arch Linux require `NO_STRIP=1` — the `strip` binary bundled inside the linuxdeploy AppImage is too old to handle the `.relr.dyn` section in modern Arch libraries: `NO_STRIP=1 pnpm tauri build`.
 
 ## CI (`.github/workflows/ci.yml`)
 

@@ -45,7 +45,17 @@ export const handleSaveCredentials = async (
         const apiKey = userSettings.general.apiKey
 
         // Wait for user info first, which should be faster
-        const cardFarmingUser = await fetchUserSummary(steamId, apiKey)
+        let cardFarmingUser = await fetchUserSummary(steamId, apiKey)
+
+        // API key not configured: fall back to the cookie's steam ID and the
+        // signed-in user's profile data so credentials can still be saved.
+        if (!cardFarmingUser.steamId) {
+          cardFarmingUser = {
+            steamId,
+            personaName: userSummary?.personaName ?? '',
+            avatar: userSummary?.avatar ?? '',
+          }
+        }
 
         // Make sure user isn't trying to farm cards with different account than they're logged in with
         if (cardFarmingUser.steamId !== userSummary?.steamId) {

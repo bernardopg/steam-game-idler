@@ -65,6 +65,6 @@ split-debuginfo = "unpacked"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = true
+strip = false
 panic = "abort"
 overflow-checks = false

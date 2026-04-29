@@ -37,7 +37,7 @@ export const GeneralSettings = () => {
       <div className='flex flex-col gap-3 mt-4'>
         <div className='flex items-end gap-4 w-fit group'>
           <Image
-            src={userSummary?.avatar || ''}
+            src={userSummary?.avatar || '/fallback.webp'}
             height={64}
             width={64}
             alt='user avatar'

@@ -8,20 +8,20 @@ UTILITY_BIN_DEFAULT="$REPO_ROOT/../steam-utility-multiplataform/src/SteamUtility
 export SGI_STEAM_UTILITY_PATH="${SGI_STEAM_UTILITY_PATH:-$UTILITY_BIN_DEFAULT}"
 
 if [[ ! -x "$SGI_STEAM_UTILITY_PATH" ]]; then
-  echo "SteamUtility binary not found or not executable:" >&2
-  echo "  $SGI_STEAM_UTILITY_PATH" >&2
-  echo >&2
-  echo "Build it first with:" >&2
-  echo "  cd ../steam-utility-multiplataform && dotnet build steam-utility-multiplataform.sln -c Release" >&2
-  exit 1
+    echo "SteamUtility binary not found or not executable:" >&2
+    echo "  $SGI_STEAM_UTILITY_PATH" >&2
+    echo >&2
+    echo "Build it first with:" >&2
+    echo "  cd ../steam-utility-multiplataform && dotnet build steam-utility-multiplataform.sln -c Release" >&2
+    exit 1
 fi
 
 if [[ ! -f "$REPO_ROOT/.env.dev" ]]; then
-  # The Rust backend reads `KEY` first (with `STEAM_API_KEY` as fallback). Use
-  # the canonical name here so users grepping for the variable in the source
-  # tree find a consistent reference.
-  echo 'KEY=""' > "$REPO_ROOT/.env.dev"
-  echo "Created placeholder .env.dev at $REPO_ROOT/.env.dev" >&2
+    # The Rust backend reads `KEY` first (with `STEAM_API_KEY` as fallback). Use
+    # the canonical name here so users grepping for the variable in the source
+    # tree find a consistent reference.
+    echo 'KEY=""' > "$REPO_ROOT/.env.dev"
+    echo "Created placeholder .env.dev at $REPO_ROOT/.env.dev" >&2
 fi
 
 pkill -TERM -f "$SGI_STEAM_UTILITY_PATH idle" 2>/dev/null || true
@@ -41,4 +41,9 @@ source "$REPO_ROOT/.env.dev" 2>/dev/null || true
 set +o allexport
 
 cd "$REPO_ROOT"
+# Enable Rust backtraces and debug logging for Tauri/Rust when running in dev.
+# Allow overriding these via environment if already set.
+export RUST_BACKTRACE="${RUST_BACKTRACE:-1}"
+export RUST_LOG="${RUST_LOG:-debug}"
+
 exec pnpm tauri dev

@@ -179,6 +179,7 @@ export async function autoRevalidateSteamCredentials(
 // Clear local/session storage but preserving important keys
 export const preserveKeysAndClearData = async () => {
   try {
+    logEvent('[Settings - Clear Data] Clearing local and cache data')
     const keysToPreserve = [
       'theme',
       'minToTrayNotified',
@@ -200,10 +201,12 @@ export const preserveKeysAndClearData = async () => {
     sessionStorage.clear()
 
     await invoke('delete_all_cache_files')
+    logEvent('[Settings - Clear Data] Cache files deleted')
 
     Object.entries(preservedData).forEach(([key, value]) => {
       localStorage.setItem(key, value)
     })
+    logEvent('[Settings - Clear Data] Local and session data cleared successfully')
   } catch (error) {
     showDangerToast(i18next.t('common.error'))
     console.error('Error in (preserveKeysAndClearData):', error)

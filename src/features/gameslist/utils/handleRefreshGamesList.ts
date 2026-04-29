@@ -24,6 +24,7 @@ export const handleRefreshGamesList = async (
 
     // Delete cached games list files from backend
     await invoke('delete_user_games_list_files', { steamId })
+    logEvent(`[Games List] Cached games list deleted for ${steamId}`)
 
     // Set a 30 min cooldown for refreshing games
     sessionStorage.setItem('cooldown', String(moment().add(30, 'minutes').unix()))

@@ -1,0 +1,15 @@
+---
+title: 5.0.5
+date: 2026-04-29
+tags: ['Improved', 'Fixed']
+---
+
+### Improved 🚀
+- **Linux Debugging**: Added more detailed app, Steam monitor, settings, cache, and sign-in logs to help diagnose Linux/Tauri runtime issues from **Settings > Debug**.
+- **Steam CDN Images**: Added support for `cdn.steamstatic.com` image assets so avatars and Steam-hosted media load correctly when Steam returns the newer CDN host.
+- **Development Builds**: Linux dev runs now enable Rust backtraces and debug logging by default, and release-profile stripping is disabled to avoid AppImage build failures on newer Arch Linux toolchains.
+
+### Fixed 🛠️
+- **Steam Credentials Without API Key**: Steam credential saving can now fall back to the signed-in Steam profile when a Steam Web API key is not configured.
+- **Missing Avatars**: User avatar rendering now falls back to the bundled placeholder image instead of attempting to load an empty image URL.
+- **Cache Clearing**: Clearing app data now waits for log and cache cleanup to finish before resetting the signed-in user state.

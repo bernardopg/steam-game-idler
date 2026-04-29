@@ -8,8 +8,8 @@ export const fetchUserSummary = async (steamId: string, apiKey: string | null) =
     apiKey: apiKey ? decrypt(apiKey) : null,
   })
   return {
-    steamId: res.response.players[0]?.steamid,
-    personaName: res.response.players[0]?.personaname,
-    avatar: res.response.players[0]?.avatar.replace('.jpg', '_full.jpg'),
+    steamId: res.response.players[0]?.steamid ?? '',
+    personaName: res.response.players[0]?.personaname ?? '',
+    avatar: res.response.players[0]?.avatar?.replace('.jpg', '_full.jpg') ?? '',
   }
 }

@@ -308,7 +308,7 @@ export const Sidebar = () => {
           >
             <div className={cn('relative shrink-0', sidebarCollapsed ? 'w-7 h-7' : 'w-8 h-8')}>
               <Image
-                src={userSummary?.avatar || ''}
+                src={userSummary?.avatar || '/fallback.webp'}
                 alt={userSummary?.personaName || 'User Avatar'}
                 width={sidebarCollapsed ? 28 : 32}
                 height={sidebarCollapsed ? 28 : 32}
