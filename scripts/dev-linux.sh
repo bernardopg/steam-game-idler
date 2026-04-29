@@ -17,7 +17,10 @@ if [[ ! -x "$SGI_STEAM_UTILITY_PATH" ]]; then
 fi
 
 if [[ ! -f "$REPO_ROOT/.env.dev" ]]; then
-  echo 'STEAM_API_KEY=""' > "$REPO_ROOT/.env.dev"
+  # The Rust backend reads `KEY` first (with `STEAM_API_KEY` as fallback). Use
+  # the canonical name here so users grepping for the variable in the source
+  # tree find a consistent reference.
+  echo 'KEY=""' > "$REPO_ROOT/.env.dev"
   echo "Created placeholder .env.dev at $REPO_ROOT/.env.dev" >&2
 fi
 
