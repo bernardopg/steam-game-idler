@@ -5,3 +5,7 @@ allowBuilds:
   '@heroui/shared-utils': true
   esbuild: true
   sharp: true
+overrides:
+  postcss: '^8.5.14'
+  path-to-regexp: '>=8.4.0'
+  picomatch: '>=4.0.4'
