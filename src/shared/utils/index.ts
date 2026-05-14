@@ -3,6 +3,7 @@ export * from './handleAutomation'
 export * from './handleIdle'
 export * from './tasks'
 export * from './tauri'
+export * from './localDevUser'
 export * from './handleStartAutoIdleGames'
 export * from './handleCheckForFreeGames'
 

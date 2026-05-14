@@ -129,6 +129,7 @@ pub fn run() {
             get_user_settings,
             update_user_settings,
             reset_user_settings,
+            migrate_local_dev_profile,
             get_trading_cards,
             get_trading_cards_cache,
             update_card_data,

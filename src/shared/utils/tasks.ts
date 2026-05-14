@@ -22,6 +22,12 @@ import {
   showIncorrectCredentialsToast,
   showSteamNotRunningToast,
 } from '@/shared/components'
+import { useUserStore } from '@/shared/stores'
+import {
+  getLocalDevSteamId,
+  migrateLocalDevProfile,
+  promoteLocalDevUserSummary,
+} from '@/shared/utils/localDevUser'
 import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export async function checkSteamStatus(showToast: boolean) {
@@ -54,6 +60,8 @@ export async function fetchLatest() {
 // Manage the anti-away status
 let antiAwayInterval: ReturnType<typeof setTimeout> | null = null
 export async function antiAwayStatus(active: boolean | null = null) {
+  if (!isTauri()) return
+
   try {
     const steamRunning = await invoke('is_steam_running')
     if (!steamRunning) return
@@ -96,6 +104,8 @@ export async function antiAwayStatus(active: boolean | null = null) {
 export async function autoRevalidateSteamCredentials(
   setUserSettings: (value: UserSettings) => void,
 ) {
+  if (!isTauri()) return
+
   try {
     const result = await invoke<InvokeSteamCredentials>('open_steam_login_window')
 
@@ -110,6 +120,7 @@ export async function autoRevalidateSteamCredentials(
       result.sessionid.length > 0 &&
       result.steamLoginSecure.length > 0
     ) {
+      const steamId = result.steamLoginSecure.slice(0, 17)
       const userSummary = JSON.parse(localStorage.getItem('userSummary') || '{}') as UserSummary
 
       const cachedUserSettings = await invoke<InvokeSettings>('get_user_settings', {
@@ -121,25 +132,35 @@ export async function autoRevalidateSteamCredentials(
         sid: result.sessionid,
         sls: result.steamLoginSecure,
         sma: result.steamMachineAuth || result.steamParental || undefined,
-        steamid: userSummary?.steamId,
+        steamid: steamId,
       })
 
       if (validate.user) {
-        const steamId = result.steamLoginSecure.slice(0, 17)
         const apiKey = cachedUserSettings.settings.general.apiKey
 
         // Wait for user info first, which should be faster
         const cardFarmingUser = await fetchUserSummary(steamId, apiKey)
 
+        const activeUserSummary = promoteLocalDevUserSummary(userSummary, cardFarmingUser)
+
+        if (activeUserSummary !== userSummary) {
+          useUserStore.getState().setUserSummary(activeUserSummary)
+          localStorage.setItem('userSummary', JSON.stringify(activeUserSummary))
+        }
+
+        if (activeUserSummary?.steamId && activeUserSummary.steamId !== userSummary?.steamId) {
+          await migrateLocalDevProfile(getLocalDevSteamId(), activeUserSummary.steamId)
+        }
+
         // Make sure user isn't trying to farm cards with different account than they're logged in with
-        if (cardFarmingUser.steamId !== userSummary?.steamId) {
+        if (cardFarmingUser.steamId !== activeUserSummary?.steamId) {
           showAccountMismatchToast('danger')
           return logEvent('[Error] in (handleSave) Account mismatch between Steam and SGI')
         }
 
         // Save valid cookies and update UI state
         await invoke<InvokeSettings>('update_user_settings', {
-          steamId: userSummary?.steamId,
+          steamId: activeUserSummary?.steamId,
           key: 'cardFarming.credentials',
           value: {
             sid: encrypt(result.sessionid),
@@ -150,7 +171,7 @@ export async function autoRevalidateSteamCredentials(
 
         // Save card farming user and update UI state
         const updatedUserSettings = await invoke<InvokeSettings>('update_user_settings', {
-          steamId: userSummary?.steamId,
+          steamId: activeUserSummary?.steamId,
           key: 'cardFarming.userSummary',
           value: cardFarmingUser,
         })
@@ -163,6 +184,8 @@ export async function autoRevalidateSteamCredentials(
 
         return {
           credentials: updatedUserSettings.settings.cardFarming.credentials,
+          settings: updatedUserSettings.settings,
+          userSummary: activeUserSummary,
         }
       } else {
         showIncorrectCredentialsToast()
@@ -332,6 +355,13 @@ export async function sendNativeNotification(title: string, body: string) {
 }
 
 export async function openExternalLink(href: string) {
+  if (!isTauri()) {
+    if (typeof window !== 'undefined') {
+      window.open(href, '_blank', 'noopener,noreferrer')
+    }
+    return
+  }
+
   try {
     await openUrl(href)
   } catch (error) {

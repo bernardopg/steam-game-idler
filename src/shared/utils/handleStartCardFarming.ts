@@ -14,10 +14,14 @@ import {
   hasGamerFeature,
   logEvent,
 } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const startCardFarming = async () => {
-  const { userSettings, userSummary, proTier, setUserSettings } = useUserStore.getState()
+  if (!isTauri()) return
+
+  const { userSummary: initialUserSummary, proTier, setUserSettings } = useUserStore.getState()
+  let { userSettings } = useUserStore.getState()
+  let userSummary = initialUserSummary
   const { setIsCardFarming } = useStateStore.getState()
 
   try {
@@ -31,6 +35,12 @@ export const startCardFarming = async () => {
     // Attempt to automatically revalidate Steam credentials for Gamer tier PRO users
     if (hasGamerFeature(proTier)) {
       const autoRevalidateResult = await autoRevalidateSteamCredentials(setUserSettings)
+      if (autoRevalidateResult?.settings) {
+        userSettings = autoRevalidateResult.settings
+      }
+      if (autoRevalidateResult?.userSummary) {
+        userSummary = autoRevalidateResult.userSummary
+      }
       if (autoRevalidateResult?.credentials) {
         credentials = autoRevalidateResult.credentials
       }

@@ -4,6 +4,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
+use std::path::Path;
 use std::path::PathBuf;
 
 // Default settings
@@ -90,6 +91,83 @@ fn merge_defaults(user: &mut Value, default: &Value) {
         // For arrays and other types, do nothing (or could handle arrays if needed)
         _ => {}
     }
+}
+
+fn copy_directory_contents(source_dir: &Path, target_dir: &Path) -> Result<(), String> {
+    if !source_dir.exists() {
+        return Ok(())
+    }
+
+    fs::create_dir_all(target_dir).map_err(|e| {
+        format!(
+            "Failed to create migration target directory {}: {}",
+            target_dir.display(),
+            e
+        )
+    })?;
+
+    for entry in fs::read_dir(source_dir).map_err(|e| {
+        format!(
+            "Failed to read migration source directory {}: {}",
+            source_dir.display(),
+            e
+        )
+    })? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let source_path = entry.path();
+        let target_path = target_dir.join(entry.file_name());
+        let file_type = entry.file_type().map_err(|e| e.to_string())?;
+
+        if file_type.is_dir() {
+            copy_directory_contents(&source_path, &target_path)?;
+            continue;
+        }
+
+        if file_type.is_file() && !target_path.exists() {
+            fs::copy(&source_path, &target_path).map_err(|e| {
+                format!(
+                    "Failed to copy {} to {}: {}",
+                    source_path.display(),
+                    target_path.display(),
+                    e
+                )
+            })?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn migrate_local_dev_profile(
+    source_steam_id: String,
+    target_steam_id: String,
+    app_handle: tauri::AppHandle,
+) -> Result<Value, String> {
+    if source_steam_id.is_empty() || target_steam_id.is_empty() || source_steam_id == target_steam_id
+    {
+        return Ok(json!({ "success": true, "migrated": false }));
+    }
+
+    let user_data_dir = get_user_data_dir(&app_handle)?;
+    let cache_dir = get_cache_dir(&app_handle)?;
+
+    let source_user_dir = user_data_dir.join(&source_steam_id);
+    let target_user_dir = user_data_dir.join(&target_steam_id);
+    copy_directory_contents(&source_user_dir, &target_user_dir)?;
+
+    if cache_dir != user_data_dir {
+        let source_cache_dir = cache_dir.join(&source_steam_id);
+        let target_cache_dir = cache_dir.join(&target_steam_id);
+        copy_directory_contents(&source_cache_dir, &target_cache_dir)?;
+    }
+
+    Ok(json!({
+        "success": true,
+        "migrated": true,
+        "sourceSteamId": source_steam_id,
+        "targetSteamId": target_steam_id,
+    }))
 }
 
 fn get_settings_file_path(

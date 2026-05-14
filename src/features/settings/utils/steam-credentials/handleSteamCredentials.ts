@@ -14,7 +14,9 @@ import {
   showIncorrectCredentialsToast,
   showSuccessToast,
 } from '@/shared/components'
-import { encrypt, logEvent } from '@/shared/utils'
+import { useUserStore } from '@/shared/stores'
+import { encrypt, logEvent, promoteLocalDevUserSummary } from '@/shared/utils'
+import { getLocalDevSteamId, migrateLocalDevProfile } from '@/shared/utils/localDevUser'
 import { invoke } from '@/shared/utils/tauri'
 
 export const handleSaveCredentials = async (
@@ -31,17 +33,18 @@ export const handleSaveCredentials = async (
 ) => {
   try {
     if (sidValue.length > 0 && slsValue.length > 0) {
+      const steamId = slsValue.slice(0, 17)
+
       // Verify steam cookies are valid
       const validate = await invoke<InvokeValidateSession>('validate_session', {
         sid: sidValue,
         sls: slsValue,
         sma: smaValue,
-        steamid: userSummary?.steamId,
+        steamid: steamId,
       })
 
       if (validate.user) {
         // Extract steamID from the steamLoginSecure cookie (first 17 chars)
-        const steamId = slsValue.slice(0, 17)
         const apiKey = userSettings.general.apiKey
 
         // Wait for user info first, which should be faster
@@ -57,22 +60,33 @@ export const handleSaveCredentials = async (
           }
         }
 
+        const activeUserSummary = promoteLocalDevUserSummary(userSummary, cardFarmingUser)
+
+        if (activeUserSummary !== userSummary) {
+          useUserStore.getState().setUserSummary(activeUserSummary)
+          localStorage.setItem('userSummary', JSON.stringify(activeUserSummary))
+        }
+
+        if (activeUserSummary?.steamId && activeUserSummary.steamId !== userSummary?.steamId) {
+          await migrateLocalDevProfile(getLocalDevSteamId(), activeUserSummary.steamId)
+        }
+
         // Make sure user isn't trying to farm cards with different account than they're logged in with
-        if (cardFarmingUser.steamId !== userSummary?.steamId) {
+        if (cardFarmingUser.steamId !== activeUserSummary?.steamId) {
           showAccountMismatchToast('danger')
           return logEvent('[Error] in (handleSave) Account mismatch between Steam and SGI')
         }
 
         // Save valid cookies and update UI state
         await invoke<InvokeSettings>('update_user_settings', {
-          steamId: userSummary?.steamId,
+          steamId: activeUserSummary?.steamId,
           key: 'cardFarming.credentials',
           value: { sid: encrypt(sidValue), sls: encrypt(slsValue), sma: smaValue },
         })
 
         // Save card farming user and update UI state
         await invoke<InvokeSettings>('update_user_settings', {
-          steamId: userSummary?.steamId,
+          steamId: activeUserSummary?.steamId,
           key: 'cardFarming.userSummary',
           value: cardFarmingUser,
         })
@@ -84,7 +98,7 @@ export const handleSaveCredentials = async (
         logEvent(`[Settings - Card Farming] Logged in as ${validate.user}`)
 
         fetchGamesWithDropsData(
-          userSummary,
+          activeUserSummary,
           setIsCFDataLoading,
           setUserSettings,
           setGamesWithDropsData,
