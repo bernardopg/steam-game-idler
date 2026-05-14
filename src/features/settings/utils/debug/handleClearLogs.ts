@@ -1,9 +1,11 @@
 import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const handleClearLogs = async (log = true) => {
+  if (!isTauri()) return
+
   try {
     await invoke('clear_log_file')
     // Only show toast if log was manually cleared

@@ -2,9 +2,11 @@ import type { InvokeCustomList, InvokeRunningProcess, UserSummary } from '@/shar
 import i18next from 'i18next'
 import { showDangerToast, showNoGamesToast } from '@/shared/components'
 import { checkSteamStatus, logEvent, startIdle } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const startAutoIdleGames = async () => {
+  if (!isTauri()) return
+
   try {
     const userSummary = JSON.parse(localStorage.getItem('userSummary') || '{}') as UserSummary
     if (!userSummary?.steamId) return
@@ -46,6 +48,11 @@ export const startAutoIdleGames = async () => {
 }
 
 export async function startAutoIdleGamesImpl(steamId: string, manual?: boolean) {
+  if (!isTauri()) {
+    if (manual) showNoGamesToast()
+    return
+  }
+
   try {
     const customLists = await invoke<InvokeCustomList>('get_custom_lists', {
       steamId,

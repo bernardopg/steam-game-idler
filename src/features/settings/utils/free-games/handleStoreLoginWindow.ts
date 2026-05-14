@@ -3,11 +3,13 @@ import i18next from 'i18next'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const handleShowStoreLoginWindow = async (
   setUserSettings: (value: UserSettings | ((prev: UserSettings) => UserSettings)) => void,
 ) => {
+  if (!isTauri()) return
+
   const { userSummary } = useUserStore.getState()
 
   const result = await invoke<InvokeSteamCredentials>('open_store_login_window')
@@ -36,6 +38,8 @@ export const handleShowStoreLoginWindow = async (
 export const handleSignOutCurrentStoreUser = async (
   setUserSettings: (value: UserSettings | ((prev: UserSettings) => UserSettings)) => void,
 ) => {
+  if (!isTauri()) return
+
   const { userSummary } = useUserStore.getState()
 
   const result = await invoke<InvokeSteamCredentials>('delete_store_cookies')

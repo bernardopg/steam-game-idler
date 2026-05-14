@@ -4,7 +4,7 @@ import { useDisclosure } from '@heroui/react'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export function useResetSettings() {
   const { t } = useTranslation()
@@ -17,6 +17,11 @@ export function useResetSettings() {
     onClose: () => void,
     setRefreshKey: React.Dispatch<React.SetStateAction<number>>,
   ) => {
+    if (!isTauri()) {
+      onClose()
+      return
+    }
+
     try {
       const response = await invoke<InvokeSettings>('reset_user_settings', {
         steamId: userSummary?.steamId,

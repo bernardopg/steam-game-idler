@@ -1,6 +1,6 @@
 import type { InvokeSettings } from '@/shared/types'
 import { useUserStore } from '@/shared/stores'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const handleThemeChange = async (
   themeKey: string,
@@ -10,6 +10,9 @@ export const handleThemeChange = async (
 
   localStorage.setItem('theme', themeKey)
   setTheme(themeKey)
+
+  if (!isTauri()) return
+
   await invoke<InvokeSettings>('update_user_settings', {
     steamId: userSummary?.steamId,
     key: 'general.theme',

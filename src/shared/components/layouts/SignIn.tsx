@@ -7,7 +7,7 @@ import { ExtLink, LanguageSwitch, SignInHero } from '@/shared/components'
 import { useSignIn } from '@/shared/hooks'
 import { useNavigationStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const SignIn = () => {
   const { t } = useTranslation()
@@ -20,6 +20,11 @@ export const SignIn = () => {
 
   const handleRefresh = async () => {
     try {
+      if (!isTauri()) {
+        setRefreshKey(prev => prev + 1)
+        return
+      }
+
       await invoke('delete_user_summary_file')
       logEvent('[Sign In] Cached user summaries deleted')
       setRefreshKey(prev => prev + 1)

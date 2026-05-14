@@ -2,6 +2,26 @@ import type { ProTier } from '@/shared/utils'
 import { useEffect } from 'react'
 import { useUserStore } from '@/shared/stores'
 import { GRANDFATHER_CUTOFF, logEvent } from '@/shared/utils'
+import { invoke, isTauri } from '@/shared/utils/tauri'
+
+const DEFAULT_SUBSCRIPTIONS_URL = 'https://apibase.vercel.app/api/subscriptions'
+const VALID_PRO_TIERS = ['casual', 'gamer'] as const
+
+async function isLocalDevBuild() {
+  if (process.env.NODE_ENV !== 'production') return true
+  if (!isTauri()) return false
+
+  try {
+    return await invoke<boolean>('is_dev')
+  } catch {
+    return false
+  }
+}
+
+function parseProTier(value: string | undefined) {
+  if (!value) return undefined
+  return VALID_PRO_TIERS.includes(value as NonNullable<ProTier>) ? (value as ProTier) : undefined
+}
 
 export function useCheckForPro() {
   const userSummary = useUserStore(state => state.userSummary)
@@ -16,7 +36,24 @@ export function useCheckForPro() {
 
     const checkSubscription = async () => {
       try {
-        const response = await fetch('https://apibase.vercel.app/api/subscriptions', {
+        const isDevBuild = await isLocalDevBuild()
+        const forcedTier = isDevBuild
+          ? parseProTier(process.env.NEXT_PUBLIC_SGI_FORCE_PRO_TIER)
+          : undefined
+
+        if (forcedTier) {
+          setIsPro(true)
+          setProTier(forcedTier)
+          logEvent(`[PRO] Using local dev PRO tier override: ${forcedTier}`)
+          return
+        }
+
+        const subscriptionsUrl =
+          isDevBuild && process.env.NEXT_PUBLIC_SGI_SUBSCRIPTIONS_URL
+            ? process.env.NEXT_PUBLIC_SGI_SUBSCRIPTIONS_URL
+            : DEFAULT_SUBSCRIPTIONS_URL
+
+        const response = await fetch(subscriptionsUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

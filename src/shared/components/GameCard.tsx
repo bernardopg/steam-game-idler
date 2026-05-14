@@ -46,7 +46,6 @@ export const GameCard = memo(function GameCard({
               width={460}
               height={215}
               alt={`${item.name} image`}
-              priority={true}
               onError={handleImageError}
               className='w-full h-full object-cover rounded-lg duration-150'
             />
@@ -83,7 +82,6 @@ export const GameCard = memo(function GameCard({
             width={460}
             height={215}
             alt={`${item.name} image`}
-            priority={true}
             onError={handleImageError}
             className='w-full h-full object-cover rounded-lg duration-150'
           />

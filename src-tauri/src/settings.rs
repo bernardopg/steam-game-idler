@@ -95,7 +95,7 @@ fn merge_defaults(user: &mut Value, default: &Value) {
 
 fn copy_directory_contents(source_dir: &Path, target_dir: &Path) -> Result<(), String> {
     if !source_dir.exists() {
-        return Ok(())
+        return Ok(());
     }
 
     fs::create_dir_all(target_dir).map_err(|e| {
@@ -144,7 +144,9 @@ pub async fn migrate_local_dev_profile(
     target_steam_id: String,
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
-    if source_steam_id.is_empty() || target_steam_id.is_empty() || source_steam_id == target_steam_id
+    if source_steam_id.is_empty()
+        || target_steam_id.is_empty()
+        || source_steam_id == target_steam_id
     {
         return Ok(json!({ "success": true, "migrated": false }));
     }

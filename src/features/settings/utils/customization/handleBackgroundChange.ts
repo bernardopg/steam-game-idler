@@ -1,6 +1,6 @@
 import type { InvokeSettings, UserSettings } from '@/shared/types'
 import { useUserStore } from '@/shared/stores'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const handleBackgroundSave = async (
   e: React.ChangeEvent<HTMLInputElement>,
@@ -16,11 +16,13 @@ export const handleBackgroundSave = async (
   reader.onload = async () => {
     const dataUri = reader.result as string
 
-    await invoke<InvokeSettings>('update_user_settings', {
-      steamId: userSummary?.steamId,
-      key: 'general.customBackground',
-      value: dataUri,
-    })
+    if (isTauri()) {
+      await invoke<InvokeSettings>('update_user_settings', {
+        steamId: userSummary?.steamId,
+        key: 'general.customBackground',
+        value: dataUri,
+      })
+    }
 
     setUserSettings(prev => ({
       ...prev,
@@ -38,11 +40,13 @@ export const handleBackgroundDelete = async (
 ) => {
   const { userSummary } = useUserStore.getState()
 
-  await invoke<InvokeSettings>('update_user_settings', {
-    steamId: userSummary?.steamId,
-    key: 'general.customBackground',
-    value: null,
-  })
+  if (isTauri()) {
+    await invoke<InvokeSettings>('update_user_settings', {
+      steamId: userSummary?.steamId,
+      key: 'general.customBackground',
+      value: null,
+    })
+  }
 
   setUserSettings(prev => ({
     ...prev,

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { showDangerToast, showPrimaryToast } from '@/shared/components'
 import { useSearchStore, useUserStore } from '@/shared/stores'
 import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export function useGamesList() {
   const { t } = useTranslation()
@@ -38,6 +38,7 @@ export function useGamesList() {
   const silentlyUpdateGamesList = useCallback(
     async (showToast: boolean) => {
       if (
+        !isTauri() ||
         !userSummary?.steamId ||
         !hasGamerFeature(proTier) ||
         !userSettings.general?.autoUpdateGamesList
@@ -189,7 +190,7 @@ export const fetchGamesList = async (
   prevRefreshKey: number,
   apiKey?: string,
 ) => {
-  if (!steamId) return { gamesList: [], recentGamesList: [] }
+  if (!steamId || !isTauri()) return { gamesList: [], recentGamesList: [] }
   // Try to get games from cache first
   const cachedGamesListFiles = await invoke<InvokeGamesList>('get_games_list_cache', { steamId })
 

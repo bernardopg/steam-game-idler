@@ -6,7 +6,7 @@ import { Button } from '@heroui/react'
 import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { getAppVersion } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 interface SystemType {
   version: string
@@ -22,6 +22,14 @@ interface ExportedData {
 }
 
 const collectSystemInfo = async () => {
+  if (!isTauri()) {
+    return {
+      version: `${navigator.platform || 'Browser'} (${navigator.userAgent})`,
+      locale: navigator.language || null,
+      isPortable: false,
+    }
+  }
+
   const system = {} as SystemType
   const osVersion = await version()
   const cpuArch = await arch()

@@ -7,6 +7,18 @@ import { useLoaderStore, useStateStore, useUserStore } from '@/shared/stores'
 import { isTauri, logEvent } from '@/shared/utils'
 import { invoke } from '@/shared/utils/tauri'
 
+function getLocalDevUserSummary() {
+  if (process.env.NODE_ENV === 'production') return null
+  if (process.env.NEXT_PUBLIC_SGI_DEV_SIGN_IN !== 'true') return null
+
+  return {
+    steamId: process.env.NEXT_PUBLIC_SGI_DEV_STEAM_ID || '76561198000000000',
+    personaName: process.env.NEXT_PUBLIC_SGI_DEV_PERSONA_NAME || 'Local Dev User',
+    avatar: process.env.NEXT_PUBLIC_SGI_DEV_AVATAR || '',
+    mostRecent: 1,
+  }
+}
+
 export function useInit() {
   const setLoadingUserSummary = useStateStore(state => state.setLoadingUserSummary)
   const setUserSummary = useUserStore(state => state.setUserSummary)
@@ -45,9 +57,15 @@ export function useInit() {
 
   useEffect(() => {
     // Set user summary data
-    const userSummary = JSON.parse(localStorage.getItem('userSummary') || '{}') as UserSummary
+    const savedUserSummary = JSON.parse(localStorage.getItem('userSummary') || '{}') as UserSummary
+    const localDevUserSummary = getLocalDevUserSummary()
+    const userSummary = savedUserSummary?.steamId ? savedUserSummary : localDevUserSummary
 
     if (userSummary?.steamId) {
+      if (!savedUserSummary?.steamId && localDevUserSummary?.steamId) {
+        localStorage.setItem('userSummary', JSON.stringify(localDevUserSummary))
+      }
+
       setUserSummary(userSummary)
       logEvent(`[App Init] Loaded saved user summary for ${userSummary.steamId}`)
     } else {

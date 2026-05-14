@@ -117,8 +117,8 @@ export const HelpDesk = () => {
   const handleToggle = async () => {
     if (!isLoaded || typeof window === 'undefined' || !window.$chatway) return
 
-    const version = await getVersion()
-    const isPortable = await isPortableCheck()
+    const version = isTauri() ? await getVersion() : 'browser-dev'
+    const isPortable = isTauri() ? await isPortableCheck() : false
 
     const widget = document.querySelector('.chatway--container')
 

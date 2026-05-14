@@ -4,7 +4,7 @@ import { Button } from '@heroui/react'
 import { showDangerToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const OpenSettings = () => {
   const { t } = useTranslation()
@@ -12,6 +12,8 @@ export const OpenSettings = () => {
 
   // Open the log file in file explorer
   const handleOpenSettingsFile = async () => {
+    if (!isTauri()) return
+
     try {
       const filePath = `${userSummary?.steamId}\\settings.json`
       await invoke('open_file_explorer', { path: filePath })

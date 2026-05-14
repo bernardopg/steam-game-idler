@@ -12,7 +12,7 @@ import { handleSaveCredentials } from '@/features/settings/utils/steam-credentia
 import { CustomModal, ExtLink, ProBadge, showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { hasGamerFeature, logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const SteamCredentials = () => {
   const { t } = useTranslation()
@@ -26,6 +26,8 @@ export const SteamCredentials = () => {
   const { isOpen, onOpenChange } = useDisclosure()
 
   const handleShowSteamLoginWindow = async () => {
+    if (!isTauri()) return
+
     const result = await invoke<InvokeSteamCredentials>('open_steam_login_window')
 
     if (!result || result.success === false) {
@@ -51,6 +53,8 @@ export const SteamCredentials = () => {
   }
 
   const handleSignOutCurrentUser = async () => {
+    if (!isTauri()) return
+
     const result = await invoke<InvokeSteamCredentials>('delete_login_window_cookies')
 
     if (!result || result.success === false) {

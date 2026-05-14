@@ -18,7 +18,7 @@ import {
 } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
 import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export function useTradingCardsList() {
   const { t } = useTranslation()
@@ -64,6 +64,12 @@ export function useTradingCardsList() {
   useEffect(() => {
     const getTradingCards = async () => {
       try {
+        if (!isTauri()) {
+          setTradingCardsList([])
+          setIsLoading(false)
+          return
+        }
+
         const credentials = userSettings.cardFarming.credentials
         const apiKey = userSettings.general?.apiKey
 
@@ -138,6 +144,8 @@ export function useTradingCardsList() {
     setLoadingItemPrice(prev => ({ ...prev, [hash]: true }))
 
     try {
+      if (!isTauri()) return { success: false }
+
       const credentials = userSettings.cardFarming.credentials
 
       if (!credentials?.sid || !credentials?.sls) {
@@ -261,6 +269,8 @@ export function useTradingCardsList() {
 
   const handleSellSingleCard = async (assetId: string, itemId: string, price: number) => {
     try {
+      if (!isTauri()) return
+
       const card = tradingCardsList.find(c => c.assetid === assetId)
       if (card && isCardLocked(card.id)) {
         showDangerToast(t('toast.tradingCards.cardLocked'))
@@ -339,6 +349,8 @@ export function useTradingCardsList() {
 
   const handleSellSelectedCards = async () => {
     try {
+      if (!isTauri()) return
+
       const credentials = userSettings.cardFarming.credentials
       const sellDelay = userSettings?.tradingCards?.sellDelay || 10
 
@@ -454,6 +466,8 @@ export function useTradingCardsList() {
 
   // Shared helper: fetch price and list a batch of items sequentially with rate-limit handling
   const sellCardsList = async (items: TradingCard[], context: string) => {
+    if (!isTauri()) return
+
     const credentials = userSettings?.cardFarming.credentials
     if (!credentials?.sid || !credentials?.sls) return showMissingCredentialsToast()
 
@@ -568,6 +582,8 @@ export function useTradingCardsList() {
 
   const handleSellAllCards = async (list?: TradingCard[]) => {
     try {
+      if (!isTauri()) return
+
       const credentials = userSettings?.cardFarming.credentials
       if (!credentials?.sid || !credentials?.sls) return showMissingCredentialsToast()
 
@@ -589,6 +605,8 @@ export function useTradingCardsList() {
     }
 
     try {
+      if (!isTauri()) return
+
       const credentials = userSettings?.cardFarming.credentials
       if (!credentials?.sid || !credentials?.sls) return showMissingCredentialsToast()
 
@@ -626,6 +644,8 @@ export function useTradingCardsList() {
 
   const handleRemoveActiveListings = async () => {
     try {
+      if (!isTauri()) return
+
       const credentials = userSettings.cardFarming.credentials
 
       if (!credentials?.sid || !credentials?.sls) return showMissingCredentialsToast()
@@ -682,6 +702,11 @@ export function useTradingCardsList() {
 
   const handleRefresh = async () => {
     try {
+      if (!isTauri()) {
+        setRefreshKey(prev => prev + 1)
+        return
+      }
+
       await invoke('delete_user_trading_card_file', {
         steamId: userSummary?.steamId,
       })

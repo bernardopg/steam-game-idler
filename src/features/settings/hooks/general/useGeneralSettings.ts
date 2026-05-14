@@ -1,6 +1,7 @@
 import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { useEffect, useState } from 'react'
 import { useUserStore } from '@/shared/stores'
+import { isTauri } from '@/shared/utils/tauri'
 
 export const useGeneralSettings = () => {
   const userSettings = useUserStore(state => state.userSettings)
@@ -12,6 +13,11 @@ export const useGeneralSettings = () => {
   useEffect(() => {
     // Check the current state of auto start
     const checkStartupState = async () => {
+      if (!isTauri()) {
+        setStartupState(false)
+        return
+      }
+
       const isEnabledState = await isEnabled()
       setStartupState(isEnabledState)
     }

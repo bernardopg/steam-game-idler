@@ -1,8 +1,9 @@
 import type { InvokeSettings, UserSettings } from '@/shared/types'
 import i18next from 'i18next'
 import { showDangerToast } from '@/shared/components'
+import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
-import { invoke } from '@/shared/utils/tauri'
+import { invoke, isTauri } from '@/shared/utils/tauri'
 
 interface CheckboxEvent {
   target: {
@@ -20,12 +21,6 @@ export const handleCheckboxChange = async (
   try {
     const { name, checked } = e.target
 
-    const response = await invoke<InvokeSettings>('update_user_settings', {
-      steamId,
-      key: `${key}.${name}`,
-      value: checked,
-    })
-
     const mutuallyExclusivePairs: Record<string, string> = {
       listGames: 'allGames',
       allGames: 'listGames',
@@ -37,6 +32,33 @@ export const handleCheckboxChange = async (
 
     const listGamesPair = name === 'listGames' || name === 'allGames'
     const otherName = mutuallyExclusivePairs[name]
+
+    if (!isTauri()) {
+      const currentSettings = useUserStore.getState().userSettings
+      const currentSection = (currentSettings[key] ?? {}) as Record<string, unknown>
+      const nextSection = { ...currentSection, [name]: checked }
+
+      if (key === 'cardFarming' && otherName) {
+        if (checked) {
+          nextSection[otherName] = false
+        } else if (listGamesPair && !nextSection[otherName]) {
+          nextSection[otherName] = true
+        }
+      }
+
+      setUserSettings({
+        ...currentSettings,
+        [key]: nextSection,
+      } as UserSettings)
+      logEvent(`[Settings - ${String(key)}] Changed '${name}' to '${checked}'`)
+      return
+    }
+
+    const response = await invoke<InvokeSettings>('update_user_settings', {
+      steamId,
+      key: `${String(key)}.${name}`,
+      value: checked,
+    })
 
     if (key === 'cardFarming' && otherName) {
       if (checked) {
@@ -66,7 +88,7 @@ export const handleCheckboxChange = async (
       setUserSettings(response.settings)
     }
 
-    logEvent(`[Settings - ${key}] Changed '${name}' to '${checked}'`)
+    logEvent(`[Settings - ${String(key)}] Changed '${name}' to '${checked}'`)
   } catch (error) {
     showDangerToast(i18next.t('common.error'))
     console.error('Error in (handleCheckboxChange):', error)
