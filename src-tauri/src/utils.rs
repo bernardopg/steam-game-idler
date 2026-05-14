@@ -300,8 +300,17 @@ pub fn set_zoom(webview: tauri::Webview, scale_factor: f64) -> Result<(), String
         })
         .map_err(|e| e.to_string())?;
 
+    // Linux/WebKit fallback. WebView2 exposes setZoomFactor on Windows, while
+    // WebKitGTK does not expose the same controller-level API here, so apply
+    // document zoom through injected JavaScript.
     #[cfg(not(windows))]
-    let _ = (webview, scale_factor);
+    {
+        let script = format!(
+            "document.documentElement.style.zoom = '{}';",
+            scale_factor
+        );
+        webview.eval(&script).map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }
