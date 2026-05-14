@@ -1,5 +1,6 @@
 #[cfg(windows)]
 use crate::command_runner::apply_hidden_command_style;
+use crate::command_runner::spawn_url;
 use crate::steam_utility::resolve_steam_utility_path_from_base;
 use base64::Engine;
 use lazy_static::lazy_static;
@@ -117,24 +118,7 @@ pub async fn validate_steam_api_key(
 
 #[tauri::command]
 pub async fn anti_away() -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        let mut command = std::process::Command::new("cmd");
-        command.args(["/C", "start steam://friends/status/online"]);
-        apply_hidden_command_style(&mut command)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-
-    #[cfg(not(windows))]
-    {
-        std::process::Command::new("xdg-open")
-            .arg("steam://friends/status/online")
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
-
-    Ok(())
+    spawn_url("steam://friends/status/online")
 }
 
 #[tauri::command]
@@ -177,6 +161,8 @@ pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<
 
     #[cfg(all(unix, not(target_os = "macos")))]
     {
+        use crate::command_runner::spawn_path;
+
         // Open the parent directory (shows it in the file manager).
         // xdg-open cannot highlight a specific file, so we always open the
         // containing folder — this avoids "file does not exist" errors when
@@ -194,10 +180,7 @@ pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<
                 .unwrap_or(target_path.clone())
         };
 
-        std::process::Command::new("xdg-open")
-            .arg(&path_to_open)
-            .spawn()
-            .map_err(|e| e.to_string())?;
+        spawn_path(&path_to_open)?;
     }
 
     Ok(())
@@ -305,10 +288,7 @@ pub fn set_zoom(webview: tauri::Webview, scale_factor: f64) -> Result<(), String
     // document zoom through injected JavaScript.
     #[cfg(not(windows))]
     {
-        let script = format!(
-            "document.documentElement.style.zoom = '{}';",
-            scale_factor
-        );
+        let script = format!("document.documentElement.style.zoom = '{}';", scale_factor);
         webview.eval(&script).map_err(|e| e.to_string())?;
     }
 

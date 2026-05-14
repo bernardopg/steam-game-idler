@@ -4,6 +4,18 @@ use serde_json::{json, Value};
 use std::fs::File;
 use std::io::Read;
 
+fn parse_steam_utility_stdout(stdout: &[u8], stderr: &[u8]) -> Result<Value, String> {
+    let output_str = String::from_utf8_lossy(stdout);
+    let error_str = String::from_utf8_lossy(stderr);
+
+    serde_json::from_str(output_str.trim()).map_err(|e| {
+        format!(
+            "Failed to parse SteamUtility JSON output: {}\nSTDOUT: {}\nSTDERR: {}",
+            e, output_str, error_str
+        )
+    })
+}
+
 #[tauri::command]
 pub async fn get_achievement_data(
     steam_id: String,
@@ -31,13 +43,13 @@ pub async fn get_achievement_data(
             .output()
             .map_err(|e| format!("Failed to execute unlocker: {}", e))?;
 
-        let output_str = String::from_utf8_lossy(&output.stdout);
+        let status = parse_steam_utility_stdout(&output.stdout, &output.stderr)?;
 
-        if output_str.contains("error") {
-            return Ok(output_str.to_string().into());
+        if status.get("error").is_some() {
+            return Ok(status.to_string().into());
         }
 
-        if output_str.contains("success") {
+        if status.get("success").is_some() {
             if achievement_file_path.exists() {
                 let mut file = File::open(&achievement_file_path)
                     .map_err(|e| format!("Failed to open achievement file: {}", e))?;
@@ -74,7 +86,8 @@ fn run_steam_utility_command(args: &[&str]) -> Result<String, String> {
         .output()
         .map_err(|e| format!("Failed to execute SteamUtility command: {}", e))?;
 
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    let status = parse_steam_utility_stdout(&output.stdout, &output.stderr)?;
+    Ok(status.to_string())
 }
 
 #[tauri::command]

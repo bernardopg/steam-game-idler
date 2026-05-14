@@ -1,0 +1,95 @@
+---
+title: Linux Dependencies
+description: Install the Linux runtime and build dependencies required by Steam Game Idler.
+icon: PackageCheck
+---
+
+# Linux Dependencies
+
+Steam Game Idler on Linux needs the Steam client, the Tauri WebKitGTK runtime, tray support libraries, OpenSSL, and the bundled `SteamUtility.Cli` binary.
+
+The package names below follow the current Tauri v2 Linux prerequisites and the runtime dependencies declared in `src-tauri/tauri.conf.json`.
+
+## Runtime Requirements
+
+Install these before running a packaged `.deb`, `.rpm`, AppImage, or AUR build:
+
+### Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-0 libgtk-3-0 libssl3 libayatana-appindicator3-1
+```
+
+### Arch Linux / Manjaro
+
+```bash
+sudo pacman -Syu
+sudo pacman -S --needed webkit2gtk-4.1 gtk3 openssl libayatana-appindicator
+```
+
+The AUR package `steam-game-idler-git` declares these dependencies for you.
+
+### Fedora
+
+```bash
+sudo dnf install webkit2gtk4.1 gtk3 openssl libappindicator-gtk3
+```
+
+### openSUSE
+
+```bash
+sudo zypper install webkit2gtk3 gtk3 libopenssl3 libappindicator3-1
+```
+
+Package names can differ between openSUSE releases. If `webkit2gtk3` is unavailable, search for the WebKitGTK 4.1 package in your release repositories.
+
+## Build Requirements
+
+Install these only if you are building from source:
+
+### Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+```
+
+### Arch Linux / Manjaro
+
+```bash
+sudo pacman -Syu
+sudo pacman -S --needed webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg xdotool
+```
+
+### Fedora
+
+```bash
+sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file libappindicator-gtk3-devel librsvg2-devel libxdo-devel
+sudo dnf group install "c-development"
+```
+
+### openSUSE
+
+```bash
+sudo zypper install webkit2gtk3-devel libopenssl-devel curl wget file libappindicator3-1 librsvg-devel
+sudo zypper install -t pattern devel_basis
+```
+
+## Steam Client
+
+SGI requires Steam to be installed, running, and signed in to at least one account.
+
+Linux Steam discovery currently supports the common native paths and Flatpak Steam paths used by the sibling `SteamUtility.Cli` integration. If SGI cannot detect Steam, start Steam once from your desktop environment and then retry SGI.
+
+## Development Notes
+
+For local SGI development, run the guarded Linux workflow from the parent workspace:
+
+```bash
+./steam-game-idler/scripts/dev-linux.sh
+```
+
+This script validates `SteamUtility.Cli`, creates `.env.dev` when missing, clears stale idler processes, removes `/tmp/steam-game-idler`, and starts Tauri with `next dev --webpack`.
+
+Tauri's official Linux prerequisite list is maintained at [tauri.app](https://v2.tauri.app/start/prerequisites/).

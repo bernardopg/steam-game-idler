@@ -224,3 +224,27 @@ pub async fn stop_farm_idle() -> Result<Value, String> {
 
     Ok(json!({"success": "Successfully stopped idling games"}))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn creates_steam_appid_only_inside_temp_idle_work_dir() {
+        let app_id = 480;
+        let work_dir = create_idle_work_dir(app_id).expect("idle work dir should be created");
+        let appid_file = work_dir.join("steam_appid.txt");
+
+        assert!(work_dir.starts_with(idle_work_root()));
+        assert!(appid_file.exists());
+        assert_eq!(fs::read_to_string(&appid_file).unwrap(), app_id.to_string());
+
+        let manifest_dir_appid = Path::new(env!("CARGO_MANIFEST_DIR")).join("steam_appid.txt");
+        assert!(
+            !manifest_dir_appid.exists(),
+            "idle setup must not create steam_appid.txt in src-tauri"
+        );
+
+        remove_idle_work_dir(&work_dir);
+    }
+}

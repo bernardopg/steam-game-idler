@@ -4,6 +4,7 @@
     "index",
     "./get-started/install",
     "./get-started/how-to-sign-in",
+    "./get-started/linux-dependencies",
     "./get-started/build-it-yourself",
     "---Guides---",
     "./features/card-farming",

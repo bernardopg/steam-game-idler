@@ -1,7 +1,9 @@
 use crate::idling::SPAWNED_PROCESSES;
 use serde_json::{json, Value};
+use std::ffi::OsString;
 use std::fs;
 use std::time::Duration;
+use sysinfo::{Pid, Process, ProcessesToUpdate, System};
 use tauri::Emitter;
 
 #[cfg(windows)]
@@ -46,53 +48,97 @@ fn get_any_window_title_for_pid(pid: u32) -> Option<String> {
     data.title
 }
 
+fn process_text(process: &Process) -> String {
+    let name = process.name().to_string_lossy();
+    let exe = process
+        .exe()
+        .map(|path| path.to_string_lossy())
+        .unwrap_or_default();
+    let cmd = process
+        .cmd()
+        .iter()
+        .map(|arg| arg.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    format!("{} {} {}", name, exe, cmd).to_ascii_lowercase()
+}
+
+fn is_steam_utility_process(process: &Process) -> bool {
+    let text = process_text(process);
+    text.contains("steamutility") || text.contains("steamutility.cli")
+}
+
+fn parse_idle_process_args(args: &[OsString]) -> Option<(u32, String)> {
+    let idle_index = args
+        .iter()
+        .position(|arg| arg.to_string_lossy().eq_ignore_ascii_case("idle"))?;
+    let app_id = args.get(idle_index + 1)?.to_string_lossy().parse().ok()?;
+    let app_name = args
+        .iter()
+        .skip(idle_index + 2)
+        .map(|arg| arg.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    Some((app_id, app_name))
+}
+
+#[cfg(windows)]
+fn parse_process_window_title(pid: u32) -> Option<(u32, String)> {
+    let window_title = get_any_window_title_for_pid(pid)?;
+    let start = window_title.find('[')?;
+    let end = window_title[start..].find(']')?;
+    let app_id_str = &window_title[start + 1..start + end];
+    let app_id = app_id_str.parse::<u32>().ok()?;
+    let name = window_title[..start]
+        .trim()
+        .trim_end_matches(" -")
+        .to_string();
+
+    Some((app_id, name))
+}
+
+fn kill_external_process(pid: u32) -> bool {
+    let mut system = System::new_all();
+    system.refresh_processes(ProcessesToUpdate::All, true);
+
+    system
+        .process(Pid::from_u32(pid))
+        .filter(|process| is_steam_utility_process(process))
+        .map(|process| process.kill())
+        .unwrap_or(false)
+}
+
+fn external_idle_process_entries() -> Vec<(u32, u32, String)> {
+    let mut system = System::new_all();
+    system.refresh_processes(ProcessesToUpdate::All, true);
+
+    system
+        .processes()
+        .values()
+        .filter(|process| is_steam_utility_process(process))
+        .filter_map(|process| {
+            let pid = process.pid().as_u32();
+
+            #[cfg(windows)]
+            let parsed =
+                parse_process_window_title(pid).or_else(|| parse_idle_process_args(process.cmd()));
+
+            #[cfg(not(windows))]
+            let parsed = parse_idle_process_args(process.cmd());
+
+            parsed.map(|(app_id, game_name)| (pid, app_id, game_name))
+        })
+        .collect()
+}
+
 #[tauri::command]
 pub async fn get_running_processes() -> Result<Value, String> {
     cleanup_dead_processes().map_err(|e| e.to_string())?;
 
-    #[cfg(windows)]
     {
-        use sysinfo::{ProcessesToUpdate, System};
-
-        let mut system = System::new_all();
-        system.refresh_processes(ProcessesToUpdate::All, true);
-
-        let mut processes = Vec::new();
-
-        for (_pid, process) in system.processes() {
-            let proc_name = process.name().to_ascii_lowercase();
-            if proc_name == "steamutility" || proc_name == "steamutility.exe" {
-                let pid = process.pid().as_u32();
-                let window_title = get_any_window_title_for_pid(pid).unwrap_or_default();
-
-                let (game_name, app_id) = if let Some(start) = window_title.find('[') {
-                    if let Some(end) = window_title[start..].find(']') {
-                        let app_id_str = &window_title[start + 1..start + end];
-                        let name = window_title[..start].trim().trim_end_matches(" -");
-                        (name.to_string(), app_id_str.parse::<u32>().unwrap_or(0))
-                    } else {
-                        ("".to_string(), 0)
-                    }
-                } else {
-                    ("".to_string(), 0)
-                };
-
-                if app_id > 0 {
-                    processes.push(json!({
-                        "appid": app_id,
-                        "pid": pid,
-                        "name": game_name,
-                    }));
-                }
-            }
-        }
-
-        return Ok(json!({"processes": processes}));
-    }
-
-    #[cfg(not(windows))]
-    {
-        let processes = SPAWNED_PROCESSES
+        let mut processes = SPAWNED_PROCESSES
             .lock()
             .map_err(|e| e.to_string())?
             .iter()
@@ -104,6 +150,21 @@ pub async fn get_running_processes() -> Result<Value, String> {
                 })
             })
             .collect::<Vec<Value>>();
+
+        for (pid, app_id, game_name) in external_idle_process_entries() {
+            if processes
+                .iter()
+                .any(|known| known["pid"].as_u64() == Some(pid as u64))
+            {
+                continue;
+            }
+
+            processes.push(json!({
+                "appid": app_id,
+                "pid": pid,
+                "name": game_name,
+            }));
+        }
 
         Ok(json!({"processes": processes}))
     }
@@ -122,6 +183,14 @@ pub async fn kill_process_by_pid(pid: u32) -> Result<Value, String> {
         return Ok(json!({"success": "Successfully killed process with PID"}));
     }
 
+    if external_idle_process_entries()
+        .iter()
+        .any(|(external_pid, _, _)| *external_pid == pid)
+        && kill_external_process(pid)
+    {
+        return Ok(json!({"success": "Successfully killed process with PID"}));
+    }
+
     Ok(json!({"error": "Failed to kill process with PID"}))
 }
 
@@ -131,6 +200,20 @@ pub async fn kill_all_steamutil_processes() -> Result<Value, String> {
 
     let mut processes = SPAWNED_PROCESSES.lock().map_err(|e| e.to_string())?;
     if processes.is_empty() {
+        drop(processes);
+        let killed_count = external_idle_process_entries()
+            .into_iter()
+            .map(|(pid, _, _)| pid)
+            .filter(|pid| kill_external_process(*pid))
+            .count();
+
+        if killed_count > 0 {
+            return Ok(json!({
+                "success": "Successfully killed all SteamUtility processes",
+                "killed_count": killed_count
+            }));
+        }
+
         return Ok(json!({"error": "No SteamUtility processes found"}));
     }
 
@@ -143,6 +226,11 @@ pub async fn kill_all_steamutil_processes() -> Result<Value, String> {
         }
     }
     processes.clear();
+    killed_count += external_idle_process_entries()
+        .into_iter()
+        .map(|(pid, _, _)| pid)
+        .filter(|pid| kill_external_process(*pid))
+        .count();
 
     Ok(json!({
         "success": "Successfully killed all SteamUtility processes",

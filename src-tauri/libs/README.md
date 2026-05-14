@@ -1,4 +1,11 @@
-Temporary placeholder to satisfy Tauri resource glob during local workspace bring-up.
+Steam Game Idler expects the platform `SteamUtility` artifact in this directory
+for release bundles:
 
-This directory is expected to contain SteamUtility build artifacts in the original Windows-centric layout.
-During the multiplatform port, this will be replaced by a real dev/release integration strategy.
+- Windows: `SteamUtility.exe`
+- Linux: `SteamUtility.Cli`
+
+Local development may instead resolve the sibling SGI workspace build output or
+an explicit `SGI_STEAM_UTILITY_PATH` override.
+
+See `docs/STEAM_UTILITY_CONTRACT.md` for the command and JSON contract between
+the Tauri backend and `SteamUtility.Cli`.
