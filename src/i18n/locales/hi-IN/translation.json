@@ -4,6 +4,18 @@
   "gamesList.private.reason.2": "आपके गेम विवरण निजी पर सेट हैं",
   "idlingGames.title": "आईडीलिंग गेम्स",
   "customLists.cardFarming.drops_other": "{{count}} ड्रॉप शेष",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "अपनी उपलब्धियों को अनलॉक करने के लिए इस सूची में गेम्स जोड़ें",
-  "customLists.edit": "संपादन सूची"
+  "customLists.edit": "संपादन सूची",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

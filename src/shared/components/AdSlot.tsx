@@ -15,6 +15,7 @@ export const AdSlot = () => {
   const setProModalOpen = useStateStore(state => state.setProModalOpen)
   const [reloadKey, setReloadKey] = useState(0)
   const [adFilled, setAdFilled] = useState(false)
+  const shouldShowAds = isPro !== null && !hasCasualFeature(proTier)
 
   // Add more fallback ad image paths here as needed
   const fallbackAds = useMemo(
@@ -193,14 +194,13 @@ export const AdSlot = () => {
     return () => clearTimeout(timer)
   }, [gameSlugs, reloadKey])
 
+  if (!shouldShowAds) return null
+
   return (
     <div
       className={cn(
         'transition-all ease-in-out border border-border p-2 pb-1 rounded-lg',
         sidebarCollapsed && activePage !== 'settings' ? 'scale-[.160]' : 'scale-[.75]',
-        isPro === null && 'opacity-0',
-        isPro !== null && hasCasualFeature(proTier) && 'opacity-0',
-        isPro !== null && !hasCasualFeature(proTier) && 'opacity-100',
       )}
     >
       <div className='relative flex justify-center items-center overflow-hidden rounded-lg'>

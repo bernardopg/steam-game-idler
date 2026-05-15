@@ -62,6 +62,8 @@ export const GoProModal = () => {
   }, [proModalRequiredTier, proModalOpen])
 
   useEffect(() => {
+    if (!proModalOpen || priceData.tierOne.url) return
+
     const getPaymentLinks = async () => {
       try {
         const response = await fetch('https://apibase.vercel.app/api/pro-data')
@@ -77,7 +79,7 @@ export const GoProModal = () => {
       }
     }
     getPaymentLinks()
-  }, [])
+  }, [priceData.tierOne.url, proModalOpen])
 
   const handleOpenChange = (open: boolean) => {
     setProModalOpen(open)

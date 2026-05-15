@@ -39,6 +39,10 @@
   "customLists.cardFarming.buttonLabel": "Pornește colectarea cărților",
   "customLists.cardFarming.drops": "{{count}} card rămas",
   "customLists.cardFarming.drops_other": "{{count}} carduri rămase",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Adaugă jocuri în această listă pentru a debloca realizările lor",
   "customLists.achievementUnlocker.buttonLabel": "Începe deblocarea Realizărilor",
   "customLists.autoIdle.title": "Idle automat",
@@ -180,5 +184,13 @@
   "common.clear": "Șterge",
   "common.list": "Listă",
   "common.continue": "Continuă",
-  "changelog.star": "Dă un Star pe GitHub"
+  "changelog.star": "Dă un Star pe GitHub",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

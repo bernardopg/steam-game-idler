@@ -64,16 +64,17 @@ export const ChangelogModal = () => {
     >
       <ModalContent>
         <ModalBody className='p-0'>
-          {isVersionLoaded ? (
+          {isOpen && isVersionLoaded ? (
             <iframe
               src={`https://steamgameidler.com/changelog/${appVersion}`}
               className='min-h-125'
+              title={t('menu.changelog')}
             />
-          ) : (
+          ) : isOpen ? (
             <div className='flex items-center justify-center min-h-125'>
               <Spinner variant='simple' className='m-10' />
             </div>
-          )}
+          ) : null}
         </ModalBody>
 
         <ModalFooter className='border-t border-border justify-between'>

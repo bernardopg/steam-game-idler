@@ -16,6 +16,7 @@ export const Layout = ({ children }: React.PropsWithChildren) => {
   const userSettings = useUserStore(state => state.userSettings)
   const isPro = useUserStore(state => state.isPro)
   const [customBackground, setCustomBackground] = useState('')
+  const shouldLoadChatway = process.env.NODE_ENV === 'production'
 
   useEffect(() => {
     if (userSettings?.general?.customBackground) {
@@ -31,16 +32,20 @@ export const Layout = ({ children }: React.PropsWithChildren) => {
         <title>Steam Game Idler</title>
       </Head>
 
-      <Script id='chatway' src='https://cdn.chatway.app/widget.js?id=1F2cY0TT2RKh' />
-      <Script id='chatway-hide-icon' strategy='afterInteractive'>
-        {`
-          window.$chatwayOnLoad = function() {
-            if (window.$chatway && typeof window.$chatway.hideChatwayIcon === 'function') {
-              window.$chatway.hideChatwayIcon();
-            }
-          };
-        `}
-      </Script>
+      {shouldLoadChatway && (
+        <>
+          <Script id='chatway' src='https://cdn.chatway.app/widget.js?id=1F2cY0TT2RKh' />
+          <Script id='chatway-hide-icon' strategy='afterInteractive'>
+            {`
+              window.$chatwayOnLoad = function() {
+                if (window.$chatway && typeof window.$chatway.hideChatwayIcon === 'function') {
+                  window.$chatway.hideChatwayIcon();
+                }
+              };
+            `}
+          </Script>
+        </>
+      )}
 
       {!loadingUserSummary && customBackground && isPro && (
         <>

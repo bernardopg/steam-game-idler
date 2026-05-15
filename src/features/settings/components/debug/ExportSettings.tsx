@@ -1,5 +1,5 @@
 import type { UserSettings } from '@/shared/types'
-import { arch, locale, version } from '@tauri-apps/plugin-os'
+import { arch, locale, platform, version } from '@tauri-apps/plugin-os'
 import { useTranslation } from 'react-i18next'
 import { TbArrowBarUp } from 'react-icons/tb'
 import { Button } from '@heroui/react'
@@ -33,17 +33,29 @@ const collectSystemInfo = async () => {
   const system = {} as SystemType
   const osVersion = await version()
   const cpuArch = await arch()
+  const osPlatform = await platform()
   const isPortable = await invoke<boolean>('is_portable')
 
-  let winVersion = 'Windows'
-  const buildMatch = osVersion.match(/^10\.0\.(\d+)$/)
-  if (buildMatch && buildMatch[1]) {
-    const buildNumber = Number(buildMatch[1])
-    winVersion = buildNumber >= 22000 ? 'Windows 11' : 'Windows 10'
+  const is64Bit = cpuArch === 'x86_64' || cpuArch === 'aarch64'
+  const archLabel = is64Bit ? '64-bit' : '32-bit'
+
+  let osLabel: string
+  if (osPlatform === 'linux') {
+    osLabel = 'Linux'
+  } else if (osPlatform === 'macos') {
+    osLabel = 'macOS'
+  } else {
+    // Windows: detect 10 vs 11 from build number
+    const buildMatch = osVersion.match(/^10\.0\.(\d+)$/)
+    if (buildMatch && buildMatch[1]) {
+      const buildNumber = Number(buildMatch[1])
+      osLabel = buildNumber >= 22000 ? 'Windows 11' : 'Windows 10'
+    } else {
+      osLabel = 'Windows'
+    }
   }
 
-  const is64Bit = cpuArch === 'x86_64'
-  system.version = `${winVersion} ${is64Bit ? '64-bit' : '32-bit'} (${osVersion})`
+  system.version = `${osLabel} ${archLabel} (${osVersion})`
   system.locale = await locale()
   system.isPortable = isPortable
 

@@ -1,3 +1,4 @@
+import { platform } from '@tauri-apps/plugin-os'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import { useEffect } from 'react'
@@ -25,6 +26,11 @@ export function useCheckForUpdates() {
       try {
         const isPortable = await isPortableCheck()
         if (isPortable) return
+
+        if ((await platform()) === 'linux') {
+          const latest = await fetchLatest()
+          if (!latest?.platforms?.['linux-x86_64']) return
+        }
 
         const update = await check()
         if (update) {

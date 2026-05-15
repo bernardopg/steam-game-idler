@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "开始肝卡",
   "customLists.cardFarming.drops": "剩余 {{count}} 张掉落",
   "customLists.cardFarming.drops_other": "剩余 {{count}} 张掉落",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "将游戏添加到此列表中以解锁其成就",
   "customLists.achievementUnlocker.buttonLabel": "启动成就解锁器",
   "customLists.autoIdle.title": "自动挂机",
@@ -195,5 +199,13 @@
   "common.helpDesk": "帮助中心",
   "common.minutes": "分钟",
   "common.viewList": "查看列表",
-  "changelog.star": "在 GitHub 点亮星标"
+  "changelog.star": "在 GitHub 点亮星标",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

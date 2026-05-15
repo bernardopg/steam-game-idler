@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "Démarrer le farming de cartes",
   "customLists.cardFarming.drops": "{{count}} drop restant",
   "customLists.cardFarming.drops_other": "{{count}} drops restants",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Ajoutez des jeux à cette liste pour débloquer leurs succès",
   "customLists.achievementUnlocker.buttonLabel": "Démarrer le déblocage de succès",
   "customLists.achievementUnlocker.delay": "Délai",
@@ -356,5 +360,13 @@
   "changelog.star": "Star sur GitHub",
   "tray.show": "Afficher",
   "tray.quit": "Quitter",
-  "tray.update": "Vérification des Mises à jour..."
+  "tray.update": "Vérification des Mises à jour...",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

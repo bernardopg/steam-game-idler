@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { TbFolders } from 'react-icons/tb'
 import { Button } from '@heroui/react'
-import { showDangerToast } from '@/shared/components'
+import { showDangerToast, showSuccessToast } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { logEvent } from '@/shared/utils'
 import { invoke, isTauri } from '@/shared/utils/tauri'
@@ -10,13 +10,19 @@ export const OpenSettings = () => {
   const { t } = useTranslation()
   const userSummary = useUserStore(state => state.userSummary)
 
-  // Open the log file in file explorer
   const handleOpenSettingsFile = async () => {
     if (!isTauri()) return
 
+    if (!userSummary?.steamId) {
+      showDangerToast(t('common.error'))
+      return
+    }
+
     try {
-      const filePath = `${userSummary?.steamId}\\settings.json`
+      // Use path.join equivalent: let Rust handle separator normalization
+      const filePath = `${userSummary.steamId}/settings.json`
       await invoke('open_file_explorer', { path: filePath })
+      showSuccessToast(t('toast.openSettingsFile.success'))
     } catch (error) {
       showDangerToast(t('common.error'))
       console.error('Error in (handleOpenSettingsFile):', error)

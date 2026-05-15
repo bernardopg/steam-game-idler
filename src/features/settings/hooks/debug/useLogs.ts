@@ -22,11 +22,11 @@ export const useLogs = () => {
         const logEntries = logContents
           .split('\n')
           .filter(entry => entry.trim() !== '')
-          .map(entry => {
+          .map((entry, entryIndex) => {
             const separatorIndex = entry.indexOf(' + ')
             const timestamp = separatorIndex >= 0 ? entry.slice(0, separatorIndex) : ''
             const message = separatorIndex >= 0 ? entry.slice(separatorIndex + 3) : entry
-            return { timestamp, message }
+            return { id: `${timestamp}-${entryIndex}-${message}`, timestamp, message }
           })
         setLogs(logEntries)
       } catch (error) {

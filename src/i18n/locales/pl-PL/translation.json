@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "Rozpocznij farmienie kart",
   "customLists.cardFarming.drops": "Pozostała {{count}} karta",
   "customLists.cardFarming.drops_other": "Pozostało {{count}} kart",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Dodaj gry do tej listy, aby odblokować ich osiągnięcia",
   "customLists.achievementUnlocker.buttonLabel": "Rozpocznij odblokowywanie osiągnięć",
   "customLists.achievementUnlocker.delay": "Opóźnienie",
@@ -300,5 +304,13 @@
   "common.helpDesk": "Help Desk",
   "common.minutes": "minut",
   "common.viewList": "Wyświetl listę",
-  "changelog.star": "Gwiazdka na GitHub"
+  "changelog.star": "Gwiazdka na GitHub",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

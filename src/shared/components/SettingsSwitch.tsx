@@ -3,6 +3,7 @@ import type {
   CardFarmingSettings,
   GeneralSettings,
 } from '@/shared/types'
+import { useTranslation } from 'react-i18next'
 import { cn, Switch } from '@heroui/react'
 import {
   handleCheckboxChange,
@@ -21,6 +22,7 @@ interface SettingsCheckboxProps {
 }
 
 export const SettingsSwitch = ({ type, name, isProSetting = false }: SettingsCheckboxProps) => {
+  const { t } = useTranslation()
   const userSummary = useUserStore(state => state.userSummary)
   const userSettings = useUserStore(state => state.userSettings)
   const setUserSettings = useUserStore(state => state.setUserSettings)
@@ -51,15 +53,30 @@ export const SettingsSwitch = ({ type, name, isProSetting = false }: SettingsChe
     return false
   }
 
+  const switchLabel =
+    type === 'general'
+      ? t(`settings.general.${name}`, { defaultValue: name })
+      : type === 'cardFarming'
+        ? t(`settings.cardFarming.${name}`, { defaultValue: name })
+        : t(`settings.achievementUnlocker.${name}`, { defaultValue: name })
+
+  const switchClassNames = {
+    wrapper: cn(
+      '!bg-switch group-data-[hover=true]:!bg-inputhover',
+      'group-data-[selected=true]:!bg-dynamic',
+      'transition-colors duration-200',
+    ),
+    thumb: cn('!bg-content transition-all duration-200', 'group-data-[selected=true]:!ms-4'),
+  }
+
   if (name === 'antiAway') {
     return (
       <Switch
+        aria-label={switchLabel}
         size='sm'
         name={name}
         isSelected={isSettingEnabled()}
-        classNames={{
-          wrapper: cn('group-data-[selected=true]:!bg-dynamic !bg-switch'),
-        }}
+        classNames={switchClassNames}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           handleCheckboxChange(e, 'general', userSummary?.steamId, setUserSettings)
           antiAwayStatus(isSettingEnabled() ? null : undefined)
@@ -71,12 +88,11 @@ export const SettingsSwitch = ({ type, name, isProSetting = false }: SettingsChe
   if (name === 'runAtStartup') {
     return (
       <Switch
+        aria-label={switchLabel}
         size='sm'
         name={name}
         isSelected={startupState || false}
-        classNames={{
-          wrapper: cn('group-data-[selected=true]:!bg-dynamic !bg-switch'),
-        }}
+        classNames={switchClassNames}
         onChange={() => handleRunAtStartupChange(setStartupState)}
       />
     )
@@ -84,13 +100,12 @@ export const SettingsSwitch = ({ type, name, isProSetting = false }: SettingsChe
 
   return (
     <Switch
+      aria-label={switchLabel}
       size='sm'
       name={name}
       isSelected={isSettingEnabled()}
       isDisabled={isProSetting && !isPro}
-      classNames={{
-        wrapper: cn('group-data-[selected=true]:!bg-dynamic !bg-switch'),
-      }}
+      classNames={switchClassNames}
       onChange={e => {
         if (type === 'general') {
           handleCheckboxChange(e, 'general', userSummary?.steamId, setUserSettings)

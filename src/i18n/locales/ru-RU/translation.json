@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "Начать сбор карточек",
   "customLists.cardFarming.drops": "{{count}} карточка осталась",
   "customLists.cardFarming.drops_other": "Осталось карт: {{count}}",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Добавьте игры в этот список для получения их достижений",
   "customLists.achievementUnlocker.buttonLabel": "Запустить получение достижений",
   "customLists.achievementUnlocker.delay": "Задержка",
@@ -357,5 +361,13 @@
   "changelog.star": "Поставить звёздочку на GitHub",
   "tray.show": "Показать",
   "tray.quit": "Выйти",
-  "tray.update": "Проверить обновления.."
+  "tray.update": "Проверить обновления..",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

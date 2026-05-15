@@ -25,11 +25,14 @@ export function useTitlebar() {
       return
     }
 
+    if (await invoke<boolean>('is_dev')) {
+      await getCurrentWindow().minimize()
+      return
+    }
+
     await getCurrentWindow().hide()
 
     try {
-      if (await invoke<boolean>('is_dev')) return
-
       const minToTrayNotified = localStorage.getItem('minToTrayNotified') || 'false'
       let permissionGranted = await isPermissionGranted()
       if (minToTrayNotified !== 'true') {

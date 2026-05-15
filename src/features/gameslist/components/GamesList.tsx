@@ -152,7 +152,7 @@ export const GamesList = () => {
           )}
         >
           {games.slice(rowType * columnCount, (rowType + 1) * columnCount).map(item => (
-            <GameCard key={item.appid} item={item} />
+            <GameCard key={item.appid} item={item} eager={rowType === 0} />
           ))}
         </div>
       )

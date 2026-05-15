@@ -14,13 +14,19 @@ interface GameCardProps {
   item: Game
   isFreeGame?: boolean
   isAchievementUnlocker?: boolean
+  eager?: boolean
   onOpen?: () => void
+}
+
+function getSteamHeaderUrl(appId: number) {
+  return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`
 }
 
 export const GameCard = memo(function GameCard({
   item,
   isFreeGame = false,
   isAchievementUnlocker = false,
+  eager = false,
   onOpen,
 }: GameCardProps) {
   const idleGamesList = useIdleStore(state => state.idleGamesList)
@@ -42,11 +48,12 @@ export const GameCard = memo(function GameCard({
         <div className='overflow-hidden will-change-transform transition-transform duration-150'>
           <div className='aspect-460/215 relative overflow-hidden'>
             <Image
-              src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${item.appid}/header.jpg`}
+              src={getSteamHeaderUrl(item.appid)}
               width={460}
               height={215}
               alt={`${item.name} image`}
               onError={handleImageError}
+              loading={eager ? 'eager' : 'lazy'}
               className='w-full h-full object-cover rounded-lg duration-150'
             />
             <div
@@ -78,11 +85,12 @@ export const GameCard = memo(function GameCard({
         <div className='aspect-460/215 relative overflow-hidden'>
           {isIdling && <IdleTimer startTime={idlingGame.startTime ?? 0} />}
           <Image
-            src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${item.appid}/header.jpg`}
+            src={getSteamHeaderUrl(item.appid)}
             width={460}
             height={215}
             alt={`${item.name} image`}
             onError={handleImageError}
+            loading={eager ? 'eager' : 'lazy'}
             className='w-full h-full object-cover rounded-lg duration-150'
           />
           <div
@@ -101,6 +109,7 @@ export const GameCard = memo(function GameCard({
               size='sm'
               radius='full'
               className='bg-transparent hover:bg-item-hover text-altwhite hover:text-content transition-colors duration-150'
+              aria-label={isIdling ? `Stop idling ${item.name}` : `Start idling ${item.name}`}
               onPress={() =>
                 isIdling ? handleStopIdle(item, idleGamesList, setIdleGamesList) : handleIdle(item)
               }
@@ -113,6 +122,7 @@ export const GameCard = memo(function GameCard({
               size='sm'
               radius='full'
               className='bg-transparent hover:bg-item-hover text-altwhite hover:text-content transition-colors duration-150'
+              aria-label={`View achievements for ${item.name}`}
               onPress={() => viewAchievments(item, setAppId, setAppName, setShowAchievements)}
             >
               <TbAwardFilled size={18} />
@@ -124,6 +134,7 @@ export const GameCard = memo(function GameCard({
                 size='sm'
                 radius='full'
                 className='bg-transparent hover:bg-item-hover text-altwhite hover:text-content transition-colors duration-150'
+                aria-label={`Reorder achievements for ${item.name}`}
                 onPress={() => {
                   if (onOpen) onOpen()
                 }}

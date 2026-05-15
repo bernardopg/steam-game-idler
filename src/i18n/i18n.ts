@@ -59,7 +59,8 @@ i18n
     fallbackLng: {
       default: ['en-US'],
     },
-    debug: process.env.NODE_ENV === 'development',
+    debug: process.env.NEXT_PUBLIC_I18N_DEBUG === 'true',
+    showSupportNotice: false,
 
     ns,
     defaultNS,

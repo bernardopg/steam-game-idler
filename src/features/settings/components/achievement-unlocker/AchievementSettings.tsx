@@ -11,12 +11,18 @@ import { SettingsSwitch } from '@/shared/components'
 import { useUserStore } from '@/shared/stores'
 import { handleNextTaskChange } from '@/shared/utils'
 
+const MIN_UNLOCK_INTERVAL = 1
+const MAX_UNLOCK_INTERVAL = 2880
+const MIN_LABEL_POSITION = 4
+const MAX_LABEL_POSITION = 96
+
 export const AchievementSettings = () => {
   const { t } = useTranslation()
   const userSummary = useUserStore(state => state.userSummary)
   const userSettings = useUserStore(state => state.userSettings)
   const setUserSettings = useUserStore(state => state.setUserSettings)
-  const { sliderLabel, setSliderLabel } = useAchievementSettings()
+  const { sliderLabel, setSliderLabel, sliderValue, setSliderValue, getSliderLabel } =
+    useAchievementSettings()
 
   const taskOptions = [
     {
@@ -28,6 +34,63 @@ export const AchievementSettings = () => {
       label: t('customLists.autoIdle.title'),
     },
   ]
+
+  const getSliderLabelPosition = (value: number) => {
+    const percentage =
+      ((value - MIN_UNLOCK_INTERVAL) / (MAX_UNLOCK_INTERVAL - MIN_UNLOCK_INTERVAL)) * 100
+
+    return Math.min(MAX_LABEL_POSITION, Math.max(MIN_LABEL_POSITION, percentage))
+  }
+
+  const normalizeSliderValue = (value: number | number[]) => {
+    if (!Array.isArray(value)) return null
+
+    const min = Math.max(MIN_UNLOCK_INTERVAL, Math.min(value[0], value[1]))
+    const max = Math.min(MAX_UNLOCK_INTERVAL, Math.max(value[0], value[1]))
+
+    return [min, max] as [number, number]
+  }
+
+  const previewSliderValue = (value: [number, number]) => {
+    setSliderValue(value)
+    setSliderLabel(getSliderLabel(value))
+  }
+
+  const saveSliderValue = (value: [number, number]) => {
+    previewSliderValue(value)
+    void handleIntervalChange(value, userSummary, setUserSettings)
+  }
+
+  const handleSliderChange = (value: number | number[]) => {
+    const nextValue = normalizeSliderValue(value)
+    if (!nextValue) return
+
+    previewSliderValue(nextValue)
+  }
+
+  const handleSliderChangeEnd = (value: number | number[]) => {
+    const nextValue = normalizeSliderValue(value)
+    if (!nextValue) return
+
+    saveSliderValue(nextValue)
+  }
+
+  const changeMinInterval = (delta: number) => {
+    const [min, max] = sliderValue
+    const nextMin = Math.max(MIN_UNLOCK_INTERVAL, Math.min(max, min + delta))
+    saveSliderValue([nextMin, max])
+  }
+
+  const changeMaxInterval = (delta: number) => {
+    const [min, max] = sliderValue
+    const nextMax = Math.min(MAX_UNLOCK_INTERVAL, Math.max(min, max + delta))
+    saveSliderValue([min, nextMax])
+  }
+
+  const isMinDecreaseDisabled = sliderValue[0] <= MIN_UNLOCK_INTERVAL
+  const isMinIncreaseDisabled = sliderValue[0] >= sliderValue[1]
+  const isMaxDecreaseDisabled = sliderValue[1] <= sliderValue[0]
+  const isMaxIncreaseDisabled = sliderValue[1] >= MAX_UNLOCK_INTERVAL
 
   return (
     <div className='relative flex flex-col gap-4 mt-9 pb-16 w-4/5'>
@@ -192,84 +255,91 @@ export const AchievementSettings = () => {
           </div>
 
           <div className='flex flex-col items-center gap-1'>
-            <Slider
-              size='md'
-              step={1}
-              minValue={1}
-              maxValue={2880}
-              defaultValue={userSettings?.achievementUnlocker?.interval}
-              hideValue
-              className='mt-2 w-87.5'
-              classNames={{
-                track: 'bg-input',
-                filler: 'bg-dynamic',
-                thumb: 'bg-white after:bg-dynamic',
-              }}
-              onChangeEnd={e => handleIntervalChange(e, userSummary, setUserSettings)}
-              onChange={e => {
-                if (Array.isArray(e)) {
-                  setSliderLabel(
-                    t('settings.achievementUnlocker.interval', {
-                      min: e[0],
-                      max: e[1],
-                    }),
-                  )
-                }
-              }}
-            />
+            <div className='relative w-87.5 pt-5'>
+              <div className='pointer-events-none absolute top-0 left-0 h-5 w-full text-xs font-bold text-content'>
+                <span
+                  className='absolute -translate-x-1/2 rounded-md bg-input px-1.5 py-0.5 leading-none'
+                  style={{ left: `${getSliderLabelPosition(sliderValue[0])}%` }}
+                >
+                  {sliderValue[0]}
+                </span>
+                <span
+                  className='absolute -translate-x-1/2 rounded-md bg-input px-1.5 py-0.5 leading-none'
+                  style={{ left: `${getSliderLabelPosition(sliderValue[1])}%` }}
+                >
+                  {sliderValue[1]}
+                </span>
+              </div>
+              <Slider
+                size='md'
+                step={1}
+                minValue={MIN_UNLOCK_INTERVAL}
+                maxValue={MAX_UNLOCK_INTERVAL}
+                value={sliderValue}
+                hideValue
+                className='w-full'
+                classNames={{
+                  track: 'bg-input',
+                  filler: 'bg-dynamic',
+                  thumb: 'bg-white after:bg-dynamic',
+                }}
+                onChange={handleSliderChange}
+                onChangeEnd={handleSliderChangeEnd}
+              />
+            </div>
 
             <div className='flex w-full justify-between'>
               <div>
                 <Button
+                  aria-label={t('settings.achievementUnlocker.decreaseMinInterval', {
+                    defaultValue: 'Decrease minimum interval',
+                  })}
+                  isDisabled={isMinDecreaseDisabled}
                   isIconOnly
                   size='sm'
                   radius='full'
                   variant='light'
                   startContent={<FaMinus />}
-                  onPress={() => {
-                    const [min, max] = userSettings?.achievementUnlocker?.interval
-                    const newValue = [Math.max(1, min - 1), max]
-                    handleIntervalChange(newValue, userSummary, setUserSettings)
-                  }}
+                  onPress={() => changeMinInterval(-1)}
                 />
                 <Button
+                  aria-label={t('settings.achievementUnlocker.increaseMinInterval', {
+                    defaultValue: 'Increase minimum interval',
+                  })}
+                  isDisabled={isMinIncreaseDisabled}
                   isIconOnly
                   size='sm'
                   radius='full'
                   variant='light'
                   startContent={<FaPlus />}
-                  onPress={() => {
-                    const [min, max] = userSettings?.achievementUnlocker?.interval
-                    const newValue = [Math.min(max, min + 1), max]
-                    handleIntervalChange(newValue, userSummary, setUserSettings)
-                  }}
+                  onPress={() => changeMinInterval(1)}
                 />
               </div>
 
               <div>
                 <Button
+                  aria-label={t('settings.achievementUnlocker.decreaseMaxInterval', {
+                    defaultValue: 'Decrease maximum interval',
+                  })}
+                  isDisabled={isMaxDecreaseDisabled}
                   isIconOnly
                   size='sm'
                   radius='full'
                   variant='light'
                   startContent={<FaMinus />}
-                  onPress={() => {
-                    const [min, max] = userSettings?.achievementUnlocker?.interval
-                    const newValue = [min, Math.max(min, max - 1)]
-                    handleIntervalChange(newValue, userSummary, setUserSettings)
-                  }}
+                  onPress={() => changeMaxInterval(-1)}
                 />
                 <Button
+                  aria-label={t('settings.achievementUnlocker.increaseMaxInterval', {
+                    defaultValue: 'Increase maximum interval',
+                  })}
+                  isDisabled={isMaxIncreaseDisabled}
                   isIconOnly
                   size='sm'
                   radius='full'
                   variant='light'
                   startContent={<FaPlus />}
-                  onPress={() => {
-                    const [min, max] = userSettings?.achievementUnlocker?.interval
-                    const newValue = [min, Math.min(2880, max + 1)]
-                    handleIntervalChange(newValue, userSummary, setUserSettings)
-                  }}
+                  onPress={() => changeMaxInterval(1)}
                 />
               </div>
             </div>

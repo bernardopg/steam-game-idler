@@ -171,9 +171,17 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let app_handle = app.handle();
     setup_window(&app_handle)?;
-    setup_tray_icon(app)?;
+    if should_setup_tray_icon() {
+        setup_tray_icon(app)?;
+    }
 
     Ok(())
+}
+
+fn should_setup_tray_icon() -> bool {
+    !(cfg!(debug_assertions)
+        && cfg!(target_os = "linux")
+        && env::var("SGI_DISABLE_DEV_TRAY").as_deref() == Ok("1"))
 }
 
 fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -281,7 +289,19 @@ fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
 }
 
 async fn check_for_updates(app_handle: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app_handle.updater()?.check().await? {
+    let update = match app_handle.updater()?.check().await {
+        Ok(update) => update,
+        Err(error)
+            if cfg!(target_os = "linux")
+                && error.to_string().contains("linux-x86_64")
+                && error.to_string().contains("platform") =>
+        {
+            None
+        }
+        Err(error) => return Err(error),
+    };
+
+    if let Some(update) = update {
         update
             .download_and_install(|_downloaded, _total| {}, || {})
             .await?;

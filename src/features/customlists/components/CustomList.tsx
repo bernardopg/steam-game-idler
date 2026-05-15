@@ -77,6 +77,7 @@ export const CustomList = ({ type }: CustomListProps) => {
   const [isEditModalOpen, setEditModalOpen] = useState(false)
   const [gamesWithDrops, setGamesWithDrops] = useState<Game[]>([])
   const [isLoadingDrops, setIsLoadingDrops] = useState(false)
+  const [totalDropsRemaining, setTotalDropsRemaining] = useState(0)
   const sidebarCollapsed = useStateStore(state => state.sidebarCollapsed)
   const transitionDuration = useStateStore(state => state.transitionDuration)
   const isCardFarming = useStateStore(state => state.isCardFarming)
@@ -157,11 +158,13 @@ export const CustomList = ({ type }: CustomListProps) => {
           remaining: game.remaining,
         }))
 
-        const shuffledAndLimitedGames = [...parsedGamesData]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 10)
+        const sortedGames = [...parsedGamesData].sort(
+          (a, b) => (b.remaining || 0) - (a.remaining || 0),
+        )
 
-        setGamesWithDrops(shuffledAndLimitedGames)
+        const total = parsedGamesData.reduce((sum, g) => sum + (g.remaining || 0), 0)
+        setTotalDropsRemaining(total)
+        setGamesWithDrops(sortedGames)
         setIsLoadingDrops(false)
       }
     }
@@ -308,6 +311,23 @@ export const CustomList = ({ type }: CustomListProps) => {
                 </div>
               </div>
             </div>
+
+            {type === 'cardFarmingList' && gamesWithDrops.length > 0 && (
+              <div className='flex items-center gap-3 select-none shrink-0 pr-6 bg-tab-panel border border-border rounded-2xl px-4 py-3'>
+                <TbCards className='text-dynamic shrink-0' size={28} />
+                <div className='flex flex-col'>
+                  <p className='text-xl font-black tabular-nums leading-tight text-dynamic'>
+                    {totalDropsRemaining}
+                  </p>
+                  <p className='text-xs text-altwhite leading-tight'>
+                    {t('customLists.cardFarming.totalDrops', { count: totalDropsRemaining })}
+                  </p>
+                  <p className='text-xs text-altwhite leading-tight'>
+                    {t('customLists.cardFarming.acrossGames', { count: gamesWithDrops.length })}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

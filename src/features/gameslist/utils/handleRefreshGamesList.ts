@@ -1,7 +1,7 @@
 import i18next from 'i18next'
 import moment from 'moment'
 import { showDangerToast, showPrimaryToast } from '@/shared/components'
-import { logEvent } from '@/shared/utils'
+import { getLocalDevSteamIds, logEvent } from '@/shared/utils'
 import { invoke } from '@/shared/utils/tauri'
 
 export const handleRefreshGamesList = async (
@@ -10,7 +10,9 @@ export const handleRefreshGamesList = async (
   manual: boolean,
 ) => {
   try {
-    if (manual && steamId !== '76561198158912649' && steamId !== '76561198999797359') {
+    const isLocalDevAccount = steamId ? getLocalDevSteamIds().includes(steamId) : false
+
+    if (manual && !isLocalDevAccount) {
       // Check if user is on cooldown for refreshing games
       const cooldown = sessionStorage.getItem('cooldown')
       if (cooldown && moment().unix() < Number(cooldown)) {

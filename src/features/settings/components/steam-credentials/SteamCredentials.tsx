@@ -258,60 +258,69 @@ export const SteamCredentials = () => {
             )}
           </div>
 
-          <div className='flex flex-col gap-4 w-62.5'>
-            <Input
-              isRequired
-              label='sessionid'
-              labelPlacement='outside'
-              placeholder='sessionid'
-              className='max-w-72.5'
-              classNames={{
-                inputWrapper: cn(
-                  'bg-input data-[hover=true]:!bg-inputhover',
-                  'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
-                ),
-                label: ['text-xs !text-altwhite font-bold'],
-                input: ['!text-content placeholder:text-altwhite/50'],
-              }}
-              value={cardSettings.sidValue}
-              onChange={e => cardSettings.setSidValue(e.target.value)}
-              type='password'
-            />
-            <Input
-              isRequired
-              label='steamLoginSecure'
-              labelPlacement='outside'
-              placeholder='steamLoginSecure'
-              className='max-w-72.5'
-              classNames={{
-                inputWrapper: cn(
-                  'bg-input data-[hover=true]:!bg-inputhover',
-                  'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
-                ),
-                label: ['text-xs !text-altwhite font-bold'],
-                input: ['!text-content placeholder:text-altwhite/50'],
-              }}
-              value={cardSettings.slsValue}
-              onChange={e => cardSettings.setSlsValue(e.target.value)}
-              type='password'
-            />
-            <Input
-              label={<p>steamParental / steamMachineAuth</p>}
-              labelPlacement='outside'
-              placeholder='steamParental / steamMachineAuth'
-              className='max-w-72.5'
-              classNames={{
-                inputWrapper: cn(
-                  'bg-input data-[hover=true]:!bg-inputhover',
-                  'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
-                ),
-                label: ['text-xs !text-altwhite font-bold'],
-                input: ['!text-content placeholder:text-altwhite/50'],
-              }}
-              value={cardSettings.smaValue}
-              onChange={e => cardSettings.setSmaValue(e.target.value)}
-              type='password'
-            />
+          <div className='flex flex-col gap-3 w-62.5'>
+            <div className='flex flex-col gap-1 max-w-72.5'>
+              <label htmlFor='steam-sessionid' className='text-xs text-altwhite font-bold'>
+                sessionid
+              </label>
+              <Input
+                id='steam-sessionid'
+                isRequired
+                aria-label='sessionid'
+                className='max-w-72.5'
+                classNames={{
+                  inputWrapper: cn(
+                    'bg-input data-[hover=true]:!bg-inputhover',
+                    'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
+                  ),
+                  input: ['!text-content placeholder:text-altwhite/50'],
+                }}
+                value={cardSettings.sidValue}
+                onChange={e => cardSettings.setSidValue(e.target.value)}
+                type='password'
+              />
+            </div>
+            <div className='flex flex-col gap-1 max-w-72.5'>
+              <label htmlFor='steam-login-secure' className='text-xs text-altwhite font-bold'>
+                steamLoginSecure
+              </label>
+              <Input
+                id='steam-login-secure'
+                isRequired
+                aria-label='steamLoginSecure'
+                className='max-w-72.5'
+                classNames={{
+                  inputWrapper: cn(
+                    'bg-input data-[hover=true]:!bg-inputhover',
+                    'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
+                  ),
+                  input: ['!text-content placeholder:text-altwhite/50'],
+                }}
+                value={cardSettings.slsValue}
+                onChange={e => cardSettings.setSlsValue(e.target.value)}
+                type='password'
+              />
+            </div>
+            <div className='flex flex-col gap-1 max-w-72.5'>
+              <label htmlFor='steam-machine-auth' className='text-xs text-altwhite font-bold'>
+                steamParental / steamMachineAuth
+              </label>
+              <Input
+                id='steam-machine-auth'
+                aria-label='steamParental / steamMachineAuth'
+                className='max-w-72.5'
+                classNames={{
+                  inputWrapper: cn(
+                    'bg-input data-[hover=true]:!bg-inputhover',
+                    'rounded-lg group-data-[focus-within=true]:!bg-inputhover',
+                  ),
+                  input: ['!text-content placeholder:text-altwhite/50'],
+                }}
+                value={cardSettings.smaValue}
+                onChange={e => cardSettings.setSmaValue(e.target.value)}
+                type='password'
+              />
+            </div>
             <div className='flex justify-end gap-2'>
               <Button
                 size='sm'

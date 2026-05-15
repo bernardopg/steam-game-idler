@@ -1,10 +1,26 @@
 import type { CardFarmingUser, UserSummary } from '@/shared/types'
 import { invoke } from '@/shared/utils/tauri'
 
-const DEFAULT_LOCAL_DEV_STEAM_ID = '76561198000000000'
+const DEFAULT_LOCAL_DEV_STEAM_ID = ''
+
+function parseLocalDevSteamIds(value: string | undefined) {
+  return (value || '')
+    .split(',')
+    .map(steamId => steamId.trim())
+    .filter(Boolean)
+}
 
 export function getLocalDevSteamId() {
-  return process.env.NEXT_PUBLIC_SGI_DEV_STEAM_ID || DEFAULT_LOCAL_DEV_STEAM_ID
+  return process.env.NEXT_PUBLIC_SGI_DEV_STEAM_ID?.trim() || DEFAULT_LOCAL_DEV_STEAM_ID
+}
+
+export function getLocalDevSteamIds() {
+  return Array.from(
+    new Set([
+      ...parseLocalDevSteamIds(process.env.NEXT_PUBLIC_SGI_DEV_STEAM_IDS),
+      getLocalDevSteamId(),
+    ]),
+  ).filter(Boolean)
 }
 
 export function isLocalDevSignInEnabled() {

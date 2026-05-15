@@ -83,10 +83,12 @@ export const useCardFarming = async (
           abortControllerRef,
           maxFarmIdlers,
         )
-        if (!success) {
-          logEvent('[Card Farming] An error occurred (this error can often be ignored) - stopping')
+        if (success === false) {
+          logEvent('[Error] [Card Farming] Farming cycle failed - stopping')
           return setIsComplete(true)
         }
+
+        if (!success) return
       } else {
         const nextTask = await checkForNextTask()
 
@@ -380,7 +382,7 @@ export const beginFarmingCycle = async (
   try {
     for (const step of cycleSteps) {
       if (!isMountedRef.current) {
-        return false
+        return
       }
 
       const success = await step.action(gamesSet)
@@ -408,7 +410,11 @@ export const beginFarmingCycle = async (
     }
     return true
   } catch (error) {
-    console.error('Error in (beginFarmingCycle) - "undefined" can be ignored', error)
+    if (!isMountedRef.current || abortControllerRef.current.signal.aborted) {
+      return
+    }
+
+    console.error('Error in (beginFarmingCycle):', error)
     await stopFarmIdle(gamesSet)
     return false
   }

@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "Започнете со фармање на картички",
   "customLists.cardFarming.drops": "{{count}} преостанати карти",
   "customLists.cardFarming.drops_other": "{{count}} преостанати карти",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Додајте игри на оваа листа за да ги отклучите нивните achievements",
   "customLists.achievementUnlocker.buttonLabel": "Стартувај го отклучувачкот на Achievement-и",
   "customLists.autoIdle.title": "Автоматско спиење",
@@ -296,5 +300,13 @@
   "common.helpDesk": "Служба за помош",
   "common.minutes": "минути",
   "common.viewList": "Прикажи листа",
-  "changelog.star": "Ѕвезда на GitHub"
+  "changelog.star": "Ѕвезда на GitHub",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

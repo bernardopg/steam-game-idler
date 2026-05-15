@@ -40,6 +40,10 @@
   "customLists.cardFarming.buttonLabel": "Karten-Farming starten",
   "customLists.cardFarming.drops": "Noch {{count}} Drops übrig",
   "customLists.cardFarming.drops_other": "Noch {{count}} Drops übrig",
+  "customLists.cardFarming.totalDrops": "drop remaining",
+  "customLists.cardFarming.totalDrops_other": "drops remaining",
+  "customLists.cardFarming.acrossGames": "across {{count}} game",
+  "customLists.cardFarming.acrossGames_other": "across {{count}} games",
   "customLists.achievementUnlocker.subtitle": "Füge Spiele zu dieser Liste hinzu, um deren Errungenschaften freizuschalten",
   "customLists.achievementUnlocker.buttonLabel": "Errungenschafts-Freischaltung starten",
   "customLists.autoIdle.title": "Automatischer Idler",
@@ -298,5 +302,13 @@
   "common.helpDesk": "Hilfe-Center",
   "common.minutes": "Minuten",
   "common.viewList": "Liste anzeigen",
-  "changelog.star": "Star on GitHub"
+  "changelog.star": "Star on GitHub",
+  "settings.debug.tools": "Tools",
+  "settings.debug.destructive": "Danger Zone",
+  "settings.debug.autoScrollOn": "Auto-scroll: On",
+  "settings.debug.autoScrollOff": "Auto-scroll: Off",
+  "confirmation.clearLogs": "Are you sure you want to clear all logs?",
+  "toast.openLogFile.success": "Opened logs in file explorer",
+  "toast.openSettingsFile.success": "Opened settings in file explorer",
+  "common.errorTitle": "Error"
 }

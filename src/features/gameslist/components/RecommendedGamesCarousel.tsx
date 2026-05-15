@@ -120,6 +120,7 @@ export const RecommendedGamesCarousel = ({ gamesContext }: RecommendedGamesCarou
             size='sm'
             className='bg-btn-secondary text-btn-text font-bold'
             radius='full'
+            aria-label='Previous recommended games'
             onPress={() => handleManualScroll('left')}
           >
             <TbChevronLeft size={16} />
@@ -129,6 +130,7 @@ export const RecommendedGamesCarousel = ({ gamesContext }: RecommendedGamesCarou
             size='sm'
             className='bg-btn-secondary text-btn-text font-bold'
             radius='full'
+            aria-label='Next recommended games'
             onPress={() => handleManualScroll('right')}
           >
             <TbChevronRight size={16} />
@@ -137,9 +139,9 @@ export const RecommendedGamesCarousel = ({ gamesContext }: RecommendedGamesCarou
       </div>
 
       <div ref={scrollContainerRef} className='flex gap-5 pb-2 overflow-x-hidden'>
-        {gamesContext.unplayedGames.map(game => (
+        {gamesContext.unplayedGames.map((game, index) => (
           <div key={game.appid} className='shrink-0 w-110'>
-            <GameCard item={game} />
+            <GameCard item={game} eager={index === 0} />
           </div>
         ))}
       </div>

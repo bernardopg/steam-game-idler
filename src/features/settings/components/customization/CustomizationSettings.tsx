@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TbChevronRight, TbEraser } from 'react-icons/tb'
-import { Button, cn, Divider, Input, Radio, RadioGroup } from '@heroui/react'
+import { Button, cn, Divider, Input } from '@heroui/react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import {
@@ -22,6 +22,7 @@ export const CustomizationSettings = () => {
   const { t } = useTranslation()
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState('dark')
   const setProModalOpen = useStateStore(state => state.setProModalOpen)
   const setUserSettings = useUserStore(state => state.setUserSettings)
   const isPro = useUserStore(state => state.isPro)
@@ -42,11 +43,17 @@ export const CustomizationSettings = () => {
     if (!localTheme) {
       localStorage.setItem('theme', 'dark')
       setTheme('dark')
+      setSelectedTheme('dark')
     } else {
       setTheme(localTheme)
+      setSelectedTheme(localTheme)
     }
     setMounted(true)
   }, [setTheme])
+
+  useEffect(() => {
+    if (resolvedTheme) setSelectedTheme(resolvedTheme)
+  }, [resolvedTheme])
 
   if (!mounted) return null
 
@@ -175,47 +182,73 @@ export const CustomizationSettings = () => {
             <p className='text-xs text-altwhite'>{t('settings.customization.theme.description')}</p>
           </div>
 
-          <RadioGroup
-            orientation='horizontal'
-            defaultValue={resolvedTheme}
-            onValueChange={value => handleThemeChange(value, setTheme)}
+          <div
+            role='radiogroup'
+            aria-label={t('settings.customization.theme')}
+            className='grid grid-cols-5 gap-x-8 gap-y-6'
           >
-            <div className='grid grid-cols-5 space-x-2 space-y-4'>
-              {themes.map(theme => (
-                <div
+            {themes.map(theme => {
+              const isSelected = selectedTheme === theme.key
+              const isLocked = theme.isProTheme && !isPro
+
+              return (
+                <button
                   key={theme.key}
-                  onClick={() => theme.isProTheme && !isPro && setProModalOpen(true)}
+                  type='button'
+                  role='radio'
+                  aria-checked={isSelected}
+                  aria-disabled={isLocked}
+                  className={cn(
+                    'group flex w-38 flex-col items-start gap-2 rounded-lg text-left outline-none',
+                    'transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0',
+                    'focus-visible:ring-2 focus-visible:ring-dynamic focus-visible:ring-offset-2 focus-visible:ring-offset-base',
+                    isLocked && 'cursor-pointer opacity-70 hover:opacity-100',
+                  )}
+                  onClick={() => {
+                    if (isLocked) {
+                      setProModalOpen(true)
+                      return
+                    }
+
+                    setSelectedTheme(theme.key)
+                    handleThemeChange(theme.key, setTheme)
+                  }}
                 >
-                  <Radio
-                    value={theme.key}
-                    isDisabled={theme.isProTheme && !isPro}
-                    classNames={{
-                      base: 'items-end gap-0',
-                    }}
-                    size='sm'
+                  <span
+                    className={cn(
+                      'relative block h-11.25 w-36.75 overflow-hidden rounded-lg border bg-input',
+                      'transition-colors duration-150',
+                      isSelected
+                        ? 'border-dynamic shadow-[0_0_0_2px_hsl(var(--heroui-dynamic)/0.35)]'
+                        : 'border-border group-hover:border-dynamic/70',
+                    )}
                   >
-                    <div className='relative cursor-pointer'>
-                      <Image
-                        src={`/themes/${theme.key}.webp`}
-                        alt={theme.label}
-                        width={147}
-                        height={45}
-                        className='rounded-lg border border-border object-cover -translate-x-6 mb-2'
-                      />
-                      <div
-                        className='pointer-events-none -translate-x-6 absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150'
-                        style={{ boxShadow: 'inset 0 0 0 2px hsl(var(--heroui-dynamic))' }}
-                      />
-                    </div>
-                    <div className='flex items-center translate-y-0.5'>
-                      <p className='text-altwhite'>{theme.label}</p>
-                      {theme.isProTheme && !isPro && <ProBadge className='ml-2 scale-75' />}
-                    </div>
-                  </Radio>
-                </div>
-              ))}
-            </div>
-          </RadioGroup>
+                    <Image
+                      src={`/themes/${theme.key}.webp`}
+                      alt={theme.label}
+                      width={147}
+                      height={45}
+                      className='h-full w-full object-cover'
+                    />
+                    {isSelected && (
+                      <span className='pointer-events-none absolute inset-0 rounded-[7px] ring-2 ring-inset ring-dynamic' />
+                    )}
+                  </span>
+                  <span className='flex min-w-0 items-center gap-2'>
+                    <span
+                      className={cn(
+                        'truncate text-sm font-medium',
+                        isSelected ? 'text-content' : 'text-altwhite',
+                      )}
+                    >
+                      {theme.label}
+                    </span>
+                    {isLocked && <ProBadge className='scale-75' />}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

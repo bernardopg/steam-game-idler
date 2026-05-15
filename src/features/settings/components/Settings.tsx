@@ -30,6 +30,7 @@ export const Settings = () => {
     <div key={refreshKey} className={cn('min-h-screen min-w-screen bg-gradient-alt')}>
       <div className='absolute top-3 left-3 z-40'>
         <Button
+          aria-label={t('common.close')}
           isIconOnly
           radius='full'
           className='bg-item-hover text-content'

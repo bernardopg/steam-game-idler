@@ -1,18 +1,20 @@
 import type { UserSummary } from '@/shared/types'
 import { emit } from '@tauri-apps/api/event'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLoaderStore, useStateStore, useUserStore } from '@/shared/stores'
-import { isTauri, logEvent } from '@/shared/utils'
+import { getLocalDevSteamId, isLocalDevSignInEnabled, isTauri, logEvent } from '@/shared/utils'
 import { invoke } from '@/shared/utils/tauri'
 
 function getLocalDevUserSummary() {
   if (process.env.NODE_ENV === 'production') return null
-  if (process.env.NEXT_PUBLIC_SGI_DEV_SIGN_IN !== 'true') return null
+  if (!isLocalDevSignInEnabled()) return null
+
+  const steamId = getLocalDevSteamId()
+  if (!steamId) return null
 
   return {
-    steamId: process.env.NEXT_PUBLIC_SGI_DEV_STEAM_ID || '76561198000000000',
+    steamId,
     personaName: process.env.NEXT_PUBLIC_SGI_DEV_PERSONA_NAME || 'Local Dev User',
     avatar: process.env.NEXT_PUBLIC_SGI_DEV_AVATAR || '',
     mostRecent: 1,
@@ -79,23 +81,4 @@ export function useInit() {
       }, 250)
     }, 1500)
   }, [setUserSummary, setLoadingUserSummary, hideLoader])
-
-  useEffect(() => {
-    if (!isTauri()) return
-    const closeWebview = async () => {
-      try {
-        const webview = await WebviewWindow.getByLabel('webview')
-        setTimeout(() => {
-          webview
-            ?.close()
-            .then(() => logEvent('[App Init] Closed stale auth webview'))
-            .catch(error => logEvent(`[Error] in (close stale auth webview): ${error}`))
-        }, 5000)
-      } catch (error) {
-        console.error('Error in (closeWebview):', error)
-        logEvent(`[Error] in (closeWebview): ${error}`)
-      }
-    }
-    closeWebview()
-  }, [])
 }

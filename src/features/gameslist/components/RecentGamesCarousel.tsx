@@ -71,6 +71,7 @@ export const RecentGamesCarousel = ({ gamesContext }: RecentGamesCarouselProps) 
             size='sm'
             className='bg-btn-secondary text-btn-text font-bold'
             radius='full'
+            aria-label='Previous games'
             onPress={() => scroll('left')}
           >
             <TbChevronLeft size={16} />
@@ -80,6 +81,7 @@ export const RecentGamesCarousel = ({ gamesContext }: RecentGamesCarouselProps) 
             size='sm'
             className='bg-btn-secondary text-btn-text font-bold'
             radius='full'
+            aria-label='Next games'
             onPress={() => scroll('right')}
           >
             <TbChevronRight size={16} />
@@ -88,9 +90,9 @@ export const RecentGamesCarousel = ({ gamesContext }: RecentGamesCarouselProps) 
       </div>
 
       <div ref={scrollContainerRef} className='flex gap-5 pb-2 overflow-x-hidden'>
-        {topRecentGames.map((game: Game) => (
+        {topRecentGames.map((game: Game, index) => (
           <div key={game.appid} className='shrink-0 w-48'>
-            <GameCard item={game} />
+            <GameCard item={game} eager={index === 0} />
           </div>
         ))}
       </div>

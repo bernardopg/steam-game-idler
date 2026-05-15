@@ -200,7 +200,8 @@ export const GeneralSettings = () => {
           </div>
           <div className='flex flex-col gap-4 w-62.5'>
             <Input
-              placeholder={t('settings.general.webApi')}
+              aria-label={t('settings.general.webApi')}
+              placeholder={keyValue ? '' : t('settings.general.webApi')}
               className='max-w-62.5'
               classNames={{
                 inputWrapper: cn(
