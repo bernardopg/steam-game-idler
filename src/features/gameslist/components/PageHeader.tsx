@@ -67,7 +67,7 @@ export const PageHeader = ({
                   tabList: 'gap-0 w-full bg-item-active',
                   tab: 'data-[hover-unselected=true]:!bg-item-hover data-[hover-unselected=true]:opacity-100',
                   tabContent:
-                    'text-sm group-data-[selected=true]:text-dynamic text-altwhite font-bold',
+                    'text-sm group-data-[selected=true]:text-dynamic text-altwhite font-bold max-w-50 truncate',
                   cursor: '!bg-dynamic/10 w-full',
                 }}
                 onSelectionChange={key => {
