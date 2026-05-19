@@ -162,7 +162,7 @@
   "settings.general.disableTooltips": "Отключить подсказки",
   "settings.general.disableTooltips.description": "Отключить неважные подсказки в приложении",
   "settings.general.runAtStartup": "Запуск после загрузки ОС",
-  "settings.general.runAtStartup.description": "Запускать SGI автоматически при запуске Windows",
+  "settings.general.runAtStartup.description": "Запускать SGI автоматически при запуске {{os}}",
   "settings.general.language": "Язык",
   "settings.general.currency": "Валюта",
   "settings.general.currency.description": "Выберите, какую валюту использовать для цен карточек",
@@ -369,5 +369,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Показать",
+    "update": "Проверить обновления..",
+    "quit": "Выйти"
+  }
 }

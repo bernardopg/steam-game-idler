@@ -134,7 +134,7 @@
   "settings.general.disableTooltips": "Исклучи ги советите",
   "settings.general.disableTooltips.description": "Оневозможете ги непотребните совети во апликацијата",
   "settings.general.runAtStartup": "Изврши при стартување",
-  "settings.general.runAtStartup.description": "Стартувај SGI автоматски кога ќе се стартува Windows",
+  "settings.general.runAtStartup.description": "Стартувај SGI автоматски кога ќе се стартува {{os}}",
   "settings.general.language": "Јазик",
   "settings.general.currency": "Валута",
   "settings.general.currency.description": "Изберете која валута да се користи за цените на trading cards",
@@ -308,5 +308,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Прикажи",
+    "update": "Провери за ажурирања..",
+    "quit": "Излез"
+  }
 }

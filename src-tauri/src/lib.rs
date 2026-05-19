@@ -291,13 +291,8 @@ fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
 async fn check_for_updates(app_handle: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     let update = match app_handle.updater()?.check().await {
         Ok(update) => update,
-        Err(error)
-            if cfg!(target_os = "linux")
-                && error.to_string().contains("linux-x86_64")
-                && error.to_string().contains("platform") =>
-        {
-            None
-        }
+        #[cfg(target_os = "linux")]
+        Err(tauri_plugin_updater::Error::TargetNotFound(_)) => return Ok(()),
         Err(error) => return Err(error),
     };
 
@@ -307,13 +302,16 @@ async fn check_for_updates(app_handle: tauri::AppHandle) -> tauri_plugin_updater
             .await?;
         app_handle.restart();
     } else {
-        use tauri_plugin_notification::NotificationExt;
-        app_handle
-            .notification()
-            .builder()
-            .title("No updates available")
-            .show()
-            .unwrap();
+        #[cfg(not(target_os = "linux"))]
+        {
+            use tauri_plugin_notification::NotificationExt;
+            app_handle
+                .notification()
+                .builder()
+                .title("No updates available")
+                .show()
+                .unwrap();
+        }
     }
 
     Ok(())

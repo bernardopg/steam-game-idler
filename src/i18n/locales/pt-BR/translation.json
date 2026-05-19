@@ -121,7 +121,8 @@
   "settings.general.startMinimized": "Iniciar minimizado",
   "settings.general.closeToTray": "Fechar para a bandeja",
   "settings.general.disableTooltips": "Desativar dicas de interface",
-  "settings.general.runAtStartup": "Iniciar com o Windows",
+  "settings.general.runAtStartup": "Iniciar com o Sistema",
+  "settings.general.runAtStartup.description": "Iniciar o SGI automaticamente quando o {{os}} iniciar",
   "settings.general.language": "Idioma",
   "settings.general.currency": "Moeda",
   "settings.general.webApi": "Chave da Steam Web API (opcional)",
@@ -271,5 +272,12 @@
   "common.helpDesk": "Central de ajuda",
   "common.minutes": "minutos",
   "common.viewList": "Ver lista",
-  "changelog.star": "Dar estrela no GitHub"
+  "changelog.star": "Dar estrela no GitHub",
+  "tray": {
+    "show": "Mostrar",
+    "update": "Verificar atualizações..",
+    "quit": "Sair"
+  },
+  "settings.general.startMinimized.description": "Iniciar o SGI minimizado para a bandeja do sistema",
+  "settings.general.closeToTray.description": "Clicar no botão X minimizará o SGI para a bandeja do sistema em vez de fechá-lo"
 }

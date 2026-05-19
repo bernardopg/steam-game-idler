@@ -156,6 +156,13 @@ pub async fn start_farm_idle(games_list: Vec<GameInfo>) -> Result<Value, String>
     let app_ids: Vec<u32> = games_to_start.iter().map(|game| game.app_id).collect();
 
     for game in games_to_start {
+        {
+            let processes = SPAWNED_PROCESSES.lock().map_err(|e| e.to_string())?;
+            if processes.iter().any(|p| p.app_id == game.app_id) {
+                continue;
+            }
+        }
+
         let (mut command, work_dir) = build_idle_command(&exe_path, game.app_id, &game.name)?;
         let child = match apply_hidden_command_style(&mut command).spawn() {
             Ok(child) => child,

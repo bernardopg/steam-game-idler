@@ -20,7 +20,7 @@ export const GeneralSettings = () => {
   const proTier = useUserStore(state => state.proTier)
   const setProModalOpen = useStateStore(state => state.setProModalOpen)
   const setProModalRequiredTier = useStateStore(state => state.setProModalRequiredTier)
-  const { keyValue, setKeyValue, hasKey, setHasKey } = useGeneralSettings()
+  const { keyValue, setKeyValue, hasKey, setHasKey, osPlatform } = useGeneralSettings()
 
   return (
     <div className='relative flex flex-col gap-4 mt-9 pb-16 w-4/5'>
@@ -86,7 +86,7 @@ export const GeneralSettings = () => {
           <div className='flex flex-col gap-2 w-1/2'>
             <p className='text-sm text-content font-bold'>{t('settings.general.runAtStartup')}</p>
             <p className='text-xs text-altwhite'>
-              {t('settings.general.runAtStartup.description')}
+              {t('settings.general.runAtStartup.description', { os: osPlatform })}
             </p>
           </div>
           <SettingsSwitch type='general' name='runAtStartup' />

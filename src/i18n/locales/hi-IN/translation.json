@@ -17,5 +17,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "दिखाएं",
+    "update": "अपडेट जांचें..",
+    "quit": "बंद करें"
+  },
+  "settings.general.startMinimized.description": "SGI को सिस्टम ट्रे में छोटा करके शुरू करें",
+  "settings.general.closeToTray.description": "X बटन दबाने से SGI बंद होने की बजाय सिस्टम ट्रे में छोटा हो जाएगा"
 }

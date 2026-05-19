@@ -338,7 +338,6 @@ export async function sendNativeNotification(title: string, body: string) {
 
     let permissionGranted = await isPermissionGranted()
 
-    // Request permission if not granted
     if (!permissionGranted) {
       const permission = await requestPermission()
       permissionGranted = permission === 'granted'
@@ -348,7 +347,6 @@ export async function sendNativeNotification(title: string, body: string) {
       await sendNotification({ title, body })
     }
   } catch (error) {
-    showDangerToast(i18next.t('common.error'))
     console.error('Error in (sendNativeNotification):', error)
     logEvent(`[Error] in (sendNativeNotification): ${error}`)
   }

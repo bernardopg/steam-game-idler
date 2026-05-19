@@ -192,5 +192,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Afișează",
+    "update": "Verifică actualizări..",
+    "quit": "Ieși"
+  },
+  "settings.general.startMinimized.description": "Pornește SGI minimizat în tava sistemului",
+  "settings.general.closeToTray.description": "Clic pe butonul X va minimiza SGI în tava sistemului în loc să îl închidă"
 }

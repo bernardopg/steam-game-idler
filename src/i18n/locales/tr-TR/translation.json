@@ -136,7 +136,7 @@
   "settings.general.disableTooltips": "İpuçlarını Devre Dışı Bırak",
   "settings.general.disableTooltips.description": "Uygulamadaki önemsiz ipucu kutucuklarını kapatır",
   "settings.general.runAtStartup": "Başlangıçta Çalıştır",
-  "settings.general.runAtStartup.description": "Windows başladığında SGI'yı otomatik olarak başlat",
+  "settings.general.runAtStartup.description": "{{os}} başladığında SGI'yı otomatik olarak başlat",
   "settings.general.language": "Dil",
   "settings.general.currency": "Para Birimi",
   "settings.general.currency.description": "Koleksiyon kartı fiyatları için kullanılacak para birimini seçin",
@@ -313,5 +313,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Göster",
+    "update": "Güncellemeleri kontrol et..",
+    "quit": "Çıkış"
+  }
 }

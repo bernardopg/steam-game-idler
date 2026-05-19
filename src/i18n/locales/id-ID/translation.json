@@ -134,7 +134,7 @@
   "settings.general.disableTooltips": "Nonaktifkan Tooltip",
   "settings.general.disableTooltips.description": "Nonaktifkan tooltip yang tidak penting di aplikasi",
   "settings.general.runAtStartup": "Jalankan Saat Startup",
-  "settings.general.runAtStartup.description": "Jalankan SGI secara otomatis saat Windows dimulai",
+  "settings.general.runAtStartup.description": "Jalankan SGI secara otomatis saat {{os}} dimulai",
   "settings.general.language": "Bahasa",
   "settings.general.currency": "Mata Uang",
   "settings.general.currency.description": "Pilih mata uang yang akan digunakan untuk harga trading card",
@@ -310,5 +310,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Tampilkan",
+    "update": "Periksa pembaruan..",
+    "quit": "Keluar"
+  }
 }

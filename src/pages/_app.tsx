@@ -27,22 +27,28 @@ const App = ({ Component, pageProps }: AppProps) => {
               maxVisibleToasts={4}
               regionProps={{
                 classNames: {
-                  base: 'z-[2147483647] pointer-events-none',
+                  base: 'z-[2147483647] pointer-events-none !w-auto',
                 },
               }}
               toastProps={{
-                radius: 'sm',
+                radius: 'md',
                 variant: 'flat',
                 timeout: 4500,
                 shouldShowTimeoutProgress: true,
-                closeIcon: <TbX size={16} className='text-content' />,
+                closeIcon: <TbX size={14} className='text-content/60' />,
                 classNames: {
                   base: [
-                    'pointer-events-auto z-[2147483647] cursor-default border border-border bg-sidebar/95 shadow-2xl backdrop-blur-md',
+                    'pointer-events-auto z-[2147483647] cursor-default',
+                    'border border-border/60 bg-sidebar/95 shadow-lg backdrop-blur-md',
+                    '!w-[300px] !max-w-[300px]',
                   ],
-                  title: ['text-content text-sm font-semibold leading-snug'],
-                  description: ['text-content/80 text-xs font-medium'],
-                  closeButton: ['opacity-100 absolute right-1 top-1 hover:bg-item-hover'],
+                  title: ['text-content text-xs font-semibold leading-snug'],
+                  description: ['text-content/70 text-xs font-normal leading-snug mt-0.5'],
+                  closeButton: [
+                    'opacity-60 hover:opacity-100 absolute right-1 top-1 hover:bg-item-hover transition-opacity',
+                  ],
+                  progressTrack: ['bg-border/30 h-[2px]'],
+                  progressIndicator: ['h-[2px]'],
                 },
               }}
             />

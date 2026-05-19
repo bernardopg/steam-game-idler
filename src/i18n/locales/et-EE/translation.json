@@ -6,5 +6,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Näita",
+    "update": "Otsi uuendusi..",
+    "quit": "Välju"
+  },
+  "settings.general.startMinimized.description": "Käivita SGI minimeeritult süsteemisalves",
+  "settings.general.closeToTray.description": "X-nupule klõpsamine minimeerib SGI süsteemisalve selle sulgemise asemel"
 }

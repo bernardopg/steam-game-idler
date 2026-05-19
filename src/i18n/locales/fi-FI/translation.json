@@ -19,5 +19,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Näytä",
+    "update": "Tarkista päivitykset..",
+    "quit": "Lopeta"
+  },
+  "settings.general.startMinimized.description": "Käynnistä SGI pienennettyä järjestelmäilmoitusalueelle",
+  "settings.general.closeToTray.description": "X-painikkeen napsauttaminen pienentää SGI:n järjestelmäilmoitusalueelle sulkemisen sijaan"
 }

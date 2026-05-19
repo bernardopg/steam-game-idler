@@ -134,7 +134,7 @@
   "settings.general.disableTooltips": "Tooltips deaktivieren",
   "settings.general.disableTooltips.description": "Nicht benötigte Tooltips in der App deaktivieren",
   "settings.general.runAtStartup": "Beim Start ausführen",
-  "settings.general.runAtStartup.description": "SGI automatisch starten, wenn Windows startet",
+  "settings.general.runAtStartup.description": "SGI automatisch starten, wenn {{os}} startet",
   "settings.general.language": "Sprache",
   "settings.general.currency": "Währung",
   "settings.general.currency.description": "Wählen Sie die Währung aus, die für den Kartenpreis verwendet werden, soll",
@@ -310,5 +310,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Anzeigen",
+    "update": "Nach Updates suchen..",
+    "quit": "Beenden"
+  }
 }

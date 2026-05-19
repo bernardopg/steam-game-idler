@@ -6,5 +6,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "顯示",
+    "update": "檢查更新..",
+    "quit": "結束"
+  },
+  "settings.general.startMinimized.description": "以最小化方式啟動SGI到系統托盤",
+  "settings.general.closeToTray.description": "點擊X按鈕將把SGI最小化到系統托盤而不是關閉它"
 }

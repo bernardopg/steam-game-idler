@@ -162,7 +162,7 @@
   "settings.general.disableTooltips": "Disabilita suggerimenti",
   "settings.general.disableTooltips.description": "Disabilita i suggerimenti non essenziali nell'app",
   "settings.general.runAtStartup": "Esegui all'avvio",
-  "settings.general.runAtStartup.description": "Avvia automaticamente SGI all'avvio di Windows",
+  "settings.general.runAtStartup.description": "Avvia automaticamente SGI all'avvio di {{os}}",
   "settings.general.language": "Lingua",
   "settings.general.currency": "Valuta",
   "settings.general.currency.description": "Seleziona quale valuta usare per i prezzi delle carte collezionabili",
@@ -369,5 +369,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Mostra",
+    "update": "Controlla aggiornamenti..",
+    "quit": "Esci"
+  }
 }

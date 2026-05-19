@@ -26,5 +26,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Zobrazit",
+    "update": "Zkontrolovat aktualizace..",
+    "quit": "Ukončit"
+  },
+  "settings.general.startMinimized.description": "Spustit SGI minimalizovaně do systémové lišty",
+  "settings.general.closeToTray.description": "Kliknutí na tlačítko X minimalizuje SGI do systémové lišty místo zavření"
 }

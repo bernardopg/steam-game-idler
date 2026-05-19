@@ -6,5 +6,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Mostrar",
+    "update": "Verificar atualizações..",
+    "quit": "Sair"
+  },
+  "settings.general.startMinimized.description": "Iniciar o SGI minimizado para a bandeja do sistema",
+  "settings.general.closeToTray.description": "Clicar no botão X irá minimizar o SGI para a bandeja do sistema em vez de o fechar"
 }

@@ -6,5 +6,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "표시",
+    "update": "업데이트 확인..",
+    "quit": "종료"
+  },
+  "settings.general.startMinimized.description": "SGI를 시스템 트레이에 최소화하여 시작",
+  "settings.general.closeToTray.description": "X 버튼을 클릭하면 SGI가 닫히는 대신 시스템 트레이로 최소화됩니다"
 }

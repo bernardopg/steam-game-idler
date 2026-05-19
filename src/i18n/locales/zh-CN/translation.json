@@ -121,7 +121,7 @@
   "settings.general.disableTooltips": "禁用提示",
   "settings.general.disableTooltips.description": "禁用应用中非必要的悬停提示",
   "settings.general.runAtStartup": "开机时运行",
-  "settings.general.runAtStartup.description": "Windows 启动时自动启动 SGI",
+  "settings.general.runAtStartup.description": "{{os}} 启动时自动启动 SGI",
   "settings.general.language": "语言",
   "settings.general.currency": "货币",
   "settings.general.currency.description": "选择用于集换式卡牌售价的货币",
@@ -207,5 +207,12 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "显示",
+    "update": "检查更新..",
+    "quit": "退出"
+  },
+  "settings.general.startMinimized.description": "以最小化方式启动SGI到系统托盘",
+  "settings.general.closeToTray.description": "点击X按钮将把SGI最小化到系统托盘而不是关闭它"
 }

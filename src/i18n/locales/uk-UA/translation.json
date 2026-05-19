@@ -134,7 +134,7 @@
   "settings.general.disableTooltips": "Вимкнути поради",
   "settings.general.disableTooltips.description": "Вимикає додаткові поради",
   "settings.general.runAtStartup": "Запускати разом із системою",
-  "settings.general.runAtStartup.description": "Автоматично запускає програму при завантаженні Windows",
+  "settings.general.runAtStartup.description": "Автоматично запускає програму при завантаженні {{os}}",
   "settings.general.language": "Мова",
   "settings.general.currency": "Валюта",
   "settings.general.currency.description": "Оберіть валюту, яка використовуватиметься для торгівлі картками",
@@ -310,5 +310,10 @@
   "confirmation.clearLogs": "Are you sure you want to clear all logs?",
   "toast.openLogFile.success": "Opened logs in file explorer",
   "toast.openSettingsFile.success": "Opened settings in file explorer",
-  "common.errorTitle": "Error"
+  "common.errorTitle": "Error",
+  "tray": {
+    "show": "Показати",
+    "update": "Перевірити оновлення..",
+    "quit": "Вийти"
+  }
 }

@@ -162,7 +162,7 @@
   "settings.general.disableTooltips": "Disable Tooltips",
   "settings.general.disableTooltips.description": "Disable non-essential tooltips in the app",
   "settings.general.runAtStartup": "Run At Startup",
-  "settings.general.runAtStartup.description": "Start SGI automatically when Windows starts",
+  "settings.general.runAtStartup.description": "Start SGI automatically when {{os}} starts",
   "settings.general.language": "Language",
   "settings.general.currency": "Currency",
   "settings.general.currency.description": "Select which currency to use for trading card prices",
@@ -369,5 +369,10 @@
   "changelog.star": "Star on GitHub",
   "tray.show": "Show",
   "tray.quit": "Quit",
-  "tray.update": "Check for Updates.."
+  "tray.update": "Check for Updates..",
+  "tray": {
+    "show": "Show",
+    "update": "Check for updates..",
+    "quit": "Quit"
+  }
 }

@@ -1,4 +1,5 @@
 import { isEnabled } from '@tauri-apps/plugin-autostart'
+import { platform } from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
 import { useUserStore } from '@/shared/stores'
 import { isTauri } from '@/shared/utils/tauri'
@@ -6,26 +7,26 @@ import { isTauri } from '@/shared/utils/tauri'
 export const useGeneralSettings = () => {
   const userSettings = useUserStore(state => state.userSettings)
   const [startupState, setStartupState] = useState<boolean | null>(null)
+  const [osPlatform, setOsPlatform] = useState<string>('Windows')
   const [keyValue, setKeyValue] = useState('')
   const [hasKey, setHasKey] = useState(false)
   const [sliderLabel, setSliderLabel] = useState('')
 
   useEffect(() => {
-    // Check the current state of auto start
     const checkStartupState = async () => {
       if (!isTauri()) {
         setStartupState(false)
         return
       }
 
-      const isEnabledState = await isEnabled()
+      const [isEnabledState, p] = await Promise.all([isEnabled(), platform()])
       setStartupState(isEnabledState)
+      setOsPlatform(p === 'linux' ? 'Linux' : 'Windows')
     }
     checkStartupState()
   }, [])
 
   useEffect(() => {
-    // Load Steam web API key from user settings
     const apiKey = userSettings.general.apiKey
     if (apiKey && apiKey.length > 0) {
       setHasKey(true)
@@ -36,6 +37,7 @@ export const useGeneralSettings = () => {
   return {
     startupState,
     setStartupState,
+    osPlatform,
     keyValue,
     setKeyValue,
     hasKey,
