@@ -1,6 +1,7 @@
 import type { Game } from '@/shared/types'
 import { memo } from 'react'
 import { FaSteam } from 'react-icons/fa'
+import { FaX } from 'react-icons/fa6'
 import { TbArrowsSort, TbAwardFilled, TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
 import { Button } from '@heroui/react'
 import Image from 'next/image'
@@ -13,9 +14,11 @@ import { handleIdle, handleStopIdle, viewAchievments } from '@/shared/utils'
 interface GameCardProps {
   item: Game
   isFreeGame?: boolean
+  isCustomList?: boolean
   isAchievementUnlocker?: boolean
   eager?: boolean
   onOpen?: () => void
+  handleRemoveGame?: (game: Game) => Promise<void>
 }
 
 function getSteamHeaderUrl(appId: number) {
@@ -25,9 +28,11 @@ function getSteamHeaderUrl(appId: number) {
 export const GameCard = memo(function GameCard({
   item,
   isFreeGame = false,
+  isCustomList = false,
   isAchievementUnlocker = false,
   eager = false,
   onOpen,
+  handleRemoveGame,
 }: GameCardProps) {
   const idleGamesList = useIdleStore(state => state.idleGamesList)
   const setIdleGamesList = useIdleStore(state => state.setIdleGamesList)
@@ -146,9 +151,25 @@ export const GameCard = memo(function GameCard({
         </div>
       </div>
 
-      <div className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150'>
-        <CardMenu item={item} />
-      </div>
+      {!isCustomList ? (
+        <div className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150'>
+          <CardMenu item={item} />
+        </div>
+      ) : (
+        <div className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150'>
+          <div
+            className='bg-danger hover:opacity-90 rounded-full cursor-pointer p-1.5 duration-150'
+            onPointerDown={e => e.stopPropagation()}
+            onClick={() => {
+              if (handleRemoveGame) {
+                handleRemoveGame(item)
+              }
+            }}
+          >
+            <FaX size={10} />
+          </div>
+        </div>
+      )}
     </div>
   )
 })

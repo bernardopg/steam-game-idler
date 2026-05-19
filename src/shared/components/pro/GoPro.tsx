@@ -1,16 +1,12 @@
 import { cn } from '@heroui/react'
-import { useNavigationStore, useStateStore } from '@/shared/stores'
+import { useStateStore } from '@/shared/stores'
 
 export const GoPro = () => {
   const setProModalOpen = useStateStore(state => state.setProModalOpen)
-  const activePage = useNavigationStore(state => state.activePage)
 
   return (
     <div
-      className={cn(
-        'shiny-cta flex justify-between items-center',
-        activePage === 'settings' && 'ml-12',
-      )}
+      className={cn('shiny-cta flex justify-between items-center')}
       onClick={() => setProModalOpen(true)}
     >
       <p className='flex flex-col font-bold items-center w-22.5 text-[8px] space-y-0.5'>

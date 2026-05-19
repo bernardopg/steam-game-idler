@@ -25,7 +25,7 @@ export const RecommendedCardDropsCarousel = ({
     return (
       <div className='mb-6 px-6 mt-4'>
         <p className='text-lg font-black mb-3'>{t('gamesList.recommended')}</p>
-        <div className='h-48 flex items-center justify-center'>
+        <div className='h-[257.64px] flex items-center justify-center'>
           <Spinner size='lg' />
         </div>
       </div>

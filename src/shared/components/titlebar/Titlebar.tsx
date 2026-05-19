@@ -36,7 +36,7 @@ export const Titlebar = () => {
   return (
     <div
       className={cn(
-        'absolute top-0 right-0 select-none pr-0 h-9 z-9999 ease-in-out',
+        'absolute top-0 right-0 select-none pr-0 h-9 z-40 ease-in-out',
         sidebarCollapsed ? 'w-[calc(100vw-56px)]' : activePage === 'setup' ? 'w-full' : 'w-calc',
       )}
       style={{
@@ -46,7 +46,7 @@ export const Titlebar = () => {
       data-tauri-drag-region
     >
       <div className='flex justify-between gap-1.5 h-9 w-full' data-tauri-drag-region>
-        {!loaderVisible && activePage !== 'setup' && activePage !== 'settings' && (
+        {!loaderVisible && activePage !== 'setup' && (
           <div
             className={cn(
               'flex justify-center items-center p-2 cursor-pointer group',
@@ -75,18 +75,15 @@ export const Titlebar = () => {
           </div>
         )}
 
-        {!loaderVisible &&
-          isPro !== null &&
-          activePage !== 'setup' &&
-          activePage !== 'settings' && (
-            <div className='flex justify-center items-center h-full'>
-              {isPro === false ? (
-                <GoPro />
-              ) : (
-                <ProBadge requiredTier={proTier ?? 'casual'} className='scale-70 -ml-3' />
-              )}
-            </div>
-          )}
+        {!loaderVisible && isPro !== null && activePage !== 'setup' && (
+          <div className='flex justify-center items-center h-full'>
+            {isPro === false ? (
+              <GoPro />
+            ) : (
+              <ProBadge requiredTier={proTier ?? 'casual'} className='scale-70 -ml-3' />
+            )}
+          </div>
+        )}
 
         <div className='flex justify-end items-center h-full w-full' data-tauri-drag-region>
           {isPortable === false && updateAvailable && <UpdateButton />}

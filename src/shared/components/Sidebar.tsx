@@ -30,7 +30,9 @@ export const Sidebar = () => {
   const { t } = useTranslation()
   const [showSearchModal, setShowSearchModal] = useState(false)
   const activePage = useNavigationStore(state => state.activePage)
+  const previousActivePage = useNavigationStore(state => state.previousActivePage)
   const setActivePage = useNavigationStore(state => state.setActivePage)
+  const setPreviousActivePage = useNavigationStore(state => state.setPreviousActivePage)
   const freeGamesList = useUserStore(state => state.freeGamesList)
   const userSummary = useUserStore(state => state.userSummary)
   const searchContent = useSearchStore()
@@ -38,7 +40,6 @@ export const Sidebar = () => {
   const sidebarCollapsed = useStateStore(state => state.sidebarCollapsed)
   const isCardFarming = useStateStore(state => state.isCardFarming)
   const isAchievementUnlocker = useStateStore(state => state.isAchievementUnlocker)
-  const showAchievements = useStateStore(state => state.showAchievements)
   const transitionDuration = useStateStore(state => state.transitionDuration)
   const setShowAchievements = useStateStore(state => state.setShowAchievements)
   const setShowAchievementOrder = useStateStore(state => state.setShowAchievementOrder)
@@ -46,6 +47,8 @@ export const Sidebar = () => {
     activePage,
     setActivePage,
   )
+
+  const effectivePage = activePage === 'settings' ? previousActivePage : activePage
 
   const mainSidebarItems: SidebarItem[] = [
     {
@@ -133,7 +136,7 @@ export const Sidebar = () => {
 
   const renderSidebarItem = (item: SidebarItem, index: number) => {
     const Icon = item.icon
-    const isCurrentPage = activePage === item.page
+    const isCurrentPage = effectivePage === item.page
     const isFreeGames = item.id === 'free-games'
     const hasFreeGames = freeGamesList.length > 0
     const isBeta = item.isBeta
@@ -228,18 +231,15 @@ export const Sidebar = () => {
           <Button
             isIconOnly={sidebarCollapsed}
             radius='full'
-            isDisabled={
-              activePage === 'idling' ||
-              activePage === 'freeGames' ||
-              (activePage.includes('customlists') && !showAchievements)
-            }
+            isDisabled={activePage === 'idling' || activePage === 'freeGames'}
             className={cn(
               'text-altwhite active:scale-95 w-full mt-4 duration-150',
               sidebarCollapsed ? 'w-0 justify-center' : 'min-w-40 justify-start',
               searchContent.gameQueryValue ||
                 searchContent.tradingCardQueryValue ||
                 searchContent.achievementQueryValue ||
-                searchContent.statisticQueryValue
+                searchContent.statisticQueryValue ||
+                searchContent.customListQueryValue
                 ? 'bg-dynamic/10 hover:bg-dynamic/20'
                 : 'bg-item-active hover:bg-item-active/90',
             )}
@@ -251,7 +251,8 @@ export const Sidebar = () => {
                 searchContent.gameQueryValue ||
                   searchContent.tradingCardQueryValue ||
                   searchContent.achievementQueryValue ||
-                  searchContent.statisticQueryValue
+                  searchContent.statisticQueryValue ||
+                  searchContent.customListQueryValue
                   ? 'text-dynamic'
                   : undefined,
               )}
@@ -273,6 +274,10 @@ export const Sidebar = () => {
                 ) : searchContent.statisticQueryValue ? (
                   <p className='text-sm text-dynamic font-bold truncate'>
                     {searchContent.statisticQueryValue}
+                  </p>
+                ) : searchContent.customListQueryValue ? (
+                  <p className='text-sm text-dynamic font-bold'>
+                    {searchContent.customListQueryValue}
                   </p>
                 ) : (
                   <p className='text-sm font-bold truncate'>{t('common.search')}</p>
@@ -343,6 +348,7 @@ export const Sidebar = () => {
                         ? () => {
                             setShowAchievements(false)
                             setShowAchievementOrder(false)
+                            setPreviousActivePage(activePage)
                             setActivePage('settings')
                           }
                         : undefined
@@ -380,6 +386,7 @@ export const Sidebar = () => {
                       ? () => {
                           setShowAchievements(false)
                           setShowAchievementOrder(false)
+                          setPreviousActivePage(activePage)
                           setActivePage('settings')
                         }
                       : undefined

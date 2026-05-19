@@ -65,6 +65,8 @@
   "customLists.inBlacklist": "In Blacklist",
   "customLists.addAll": "Add All",
   "customLists.addAllResults": "Add All Results",
+  "customLists.emptyList": "Your {{title}} list is empty. Go to the <1>All Games</1> tab to add some games.",
+  "customLists.emptyBlacklist": "Blacklist games from the <1>All Games</1> tab to prevent them from being farmed for trading cards.",
   "customLists.invalid": "Invalid list type",
   "tradingCards.title": "Inventory Manager",
   "tradingCards.subtitle": "Sell your Steam inventory items on the market",

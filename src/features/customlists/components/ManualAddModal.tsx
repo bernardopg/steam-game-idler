@@ -6,11 +6,12 @@ import { useManualAdd } from '@/features/customlists'
 import { CustomModal } from '@/shared/components'
 
 interface ManualAddModalProps {
+  listTitle: string
   listName: string
   setList: React.Dispatch<React.SetStateAction<Game[]>>
 }
 
-export const ManualAddModal = ({ listName, setList }: ManualAddModalProps) => {
+export const ManualAddModal = ({ listTitle, listName, setList }: ManualAddModalProps) => {
   const { t } = useTranslation()
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
   const manualAdd = useManualAdd(listName, setList)
