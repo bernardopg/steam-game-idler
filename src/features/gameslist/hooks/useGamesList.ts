@@ -2,7 +2,7 @@ import type { Game, InvokeGamesList, SortStyleValue } from '@/shared/types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { showDangerToast, showPrimaryToast } from '@/shared/components'
-import { useSearchStore, useUserStore } from '@/shared/stores'
+import { useSearchStore, useStateStore, useUserStore } from '@/shared/stores'
 import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
 import { invoke, isTauri } from '@/shared/utils/tauri'
 
@@ -13,6 +13,8 @@ export function useGamesList() {
   const proTier = useUserStore(state => state.proTier)
   const gamesList = useUserStore(state => state.gamesList)
   const setGamesList = useUserStore(state => state.setGamesList)
+  const gamesListSessionUpdatedSet = useStateStore(state => state.gamesListSessionUpdatedSet)
+  const setGamesListSessionUpdated = useStateStore(state => state.setGamesListSessionUpdated)
   const isQuery = useSearchStore(state => state.isQuery)
   const gameQueryValue = useSearchStore(state => state.gameQueryValue)
   const setGameQueryValue = useSearchStore(state => state.setGameQueryValue)
@@ -155,6 +157,55 @@ export function useGamesList() {
     // Clear search input when sort style changes
     setGameQueryValue('')
   }, [sortStyle, setGameQueryValue])
+
+  // Auto-update once per session for non-PRO users on app open
+  useEffect(() => {
+    if (
+      isLoading ||
+      !userSummary ||
+      hasGamerFeature(proTier) ||
+      gamesListSessionUpdatedSet.has(userSummary.steamId)
+    )
+      return
+
+    setGamesListSessionUpdated(userSummary.steamId)
+
+    const runSessionUpdate = async () => {
+      if (!userSummary?.steamId) return
+      try {
+        const apiKey = userSettings.general?.apiKey || undefined
+        const gamesListResponse = await invoke<InvokeGamesList>('get_games_list', {
+          steamId: userSummary.steamId,
+          apiKey: apiKey ? decrypt(apiKey) : null,
+        })
+        const newGamesList = gamesListResponse.games_list
+        const currentIds = new Set(gamesListRef.current.map(g => g.appid))
+        const newIds = new Set(newGamesList.map(g => g.appid))
+        const hasChanges =
+          newGamesList.some(g => !currentIds.has(g.appid)) ||
+          gamesListRef.current.some(g => !newIds.has(g.appid))
+
+        if (hasChanges) {
+          setGamesList(newGamesList)
+          showPrimaryToast(t('toast.gamesListUpdated'))
+        }
+      } catch (error) {
+        console.error('Error in (sessionUpdateGamesList):', error)
+        logEvent(`[Error] in (sessionUpdateGamesList): ${error}`)
+      }
+    }
+
+    runSessionUpdate()
+  }, [
+    isLoading,
+    proTier,
+    gamesListSessionUpdatedSet,
+    setGamesListSessionUpdated,
+    userSummary,
+    userSettings.general?.apiKey,
+    setGamesList,
+    t,
+  ])
 
   // Auto-update games list for PRO users when the setting is enabled
   useEffect(() => {
