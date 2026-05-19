@@ -6,7 +6,7 @@ import { Button, cn } from '@heroui/react'
 import Image from 'next/image'
 import { useAchievementUnlocker } from '@/features/achievement-unlocker'
 import { useStateStore } from '@/shared/stores'
-import { startCardFarming, stopIdle, updateTrayIcon } from '@/shared/utils'
+import { startCardFarming, stopIdle, updateDiscordPresence, updateTrayIcon } from '@/shared/utils'
 
 export const AchievementUnlocker = ({ activePage }: { activePage: ActivePageType }) => {
   const { t } = useTranslation()
@@ -60,6 +60,7 @@ export const AchievementUnlocker = ({ activePage }: { activePage: ActivePageType
         }),
         true,
       )
+      updateDiscordPresence(currentGame?.name, `Unlocking ${achievementCount} achievements`)
     }
   }, [isAchievementUnlocker, currentGame, achievementCount, t])
 

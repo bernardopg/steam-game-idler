@@ -163,6 +163,8 @@
   "settings.general.disableTooltips.description": "Disable non-essential tooltips in the app",
   "settings.general.runAtStartup": "Run At Startup",
   "settings.general.runAtStartup.description": "Start SGI automatically when {{os}} starts",
+  "settings.general.discordPresence": "Discord Rich Presence",
+  "settings.general.discordPresence.description": "Display your current activity in Discord",
   "settings.general.language": "Language",
   "settings.general.currency": "Currency",
   "settings.general.currency.description": "Select which currency to use for trading card prices",

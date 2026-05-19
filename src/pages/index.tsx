@@ -4,6 +4,7 @@ import {
   useCheckForPro,
   useCheckForUpdates,
   useContextMenu,
+  useDiscordPresence,
   useFreeGames,
   useInit,
   useInitSettings,
@@ -24,6 +25,7 @@ const Index = () => {
   useAutoIdleGames()
   useCheckForPro()
   useFreeGames()
+  useDiscordPresence()
   useZoomControls()
   useContextMenu()
   useSteamMonitor()

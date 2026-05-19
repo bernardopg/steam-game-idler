@@ -26,6 +26,7 @@ use user_data::*;
 use utils::*;
 
 use std::env;
+use std::sync::Mutex;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -57,6 +58,7 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        .manage(DrpClient(Mutex::new(None)))
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
@@ -151,7 +153,10 @@ pub fn run() {
             redeem_free_game,
             set_zoom,
             quit_app,
-            update_tray_menu
+            update_tray_menu,
+            start_drp,
+            update_drp,
+            stop_drp
         ])
         .build(tauri::generate_context!())
         .expect("Error while building tauri application")

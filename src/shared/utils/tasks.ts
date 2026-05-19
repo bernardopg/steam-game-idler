@@ -319,6 +319,21 @@ export async function updateTrayIcon(tooltip?: string, runningStatus?: boolean) 
   }
 }
 
+export async function updateDiscordPresence(details?: string, state?: string) {
+  try {
+    const discordPresence = useUserStore.getState().userSettings.general.discordPresence
+    if (!discordPresence) return
+    if (state) {
+      await invoke('update_drp', { details, state })
+    } else {
+      await invoke('update_drp')
+    }
+  } catch (error) {
+    console.error('Error in updateDiscordPresence:', error)
+    logEvent(`[Error] in updateDiscordPresence: ${error}`)
+  }
+}
+
 export async function isPortableCheck() {
   if (!isTauri()) return false
   try {
