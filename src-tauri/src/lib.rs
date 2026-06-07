@@ -38,7 +38,7 @@ use tauri_plugin_window_state::StateFlags;
 pub fn run() {
     // Load environment variables based on the build configuration
     if cfg!(debug_assertions) {
-        match crypto::decrypt_api_key() {
+        match crypto::deobfuscate_api_key() {
             key if !key.is_empty() => unsafe {
                 std::env::set_var("KEY", key);
             },
@@ -47,7 +47,7 @@ pub fn run() {
             }
         }
     } else {
-        match crypto::decrypt_api_key() {
+        match crypto::deobfuscate_api_key() {
             key if !key.is_empty() => unsafe {
                 std::env::set_var("KEY", key);
             },
@@ -294,28 +294,50 @@ fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
 }
 
 async fn check_for_updates(app_handle: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    use tauri::Emitter;
+
+    // Emit a status event to the WebView so the frontend can surface a toast.
+    // Native notifications are disabled on Linux, so the emitted event is the
+    // only feedback channel there; on other platforms it complements the
+    // native notification below.
+    let emit_status = |status: &str| {
+        let _ = app_handle.emit("update_check_status", status);
+    };
+
     let update = match app_handle.updater()?.check().await {
         Ok(update) => update,
+        // On Linux the updater target may be absent (distributed via AUR /
+        // deb / rpm / AppImage and updated through the package manager).
+        // Treat that as "no in-app update available" instead of failing
+        // silently with no user feedback.
         #[cfg(target_os = "linux")]
-        Err(tauri_plugin_updater::Error::TargetNotFound(_)) => return Ok(()),
-        Err(error) => return Err(error),
+        Err(tauri_plugin_updater::Error::TargetNotFound(_)) => {
+            emit_status("managed_by_package_manager");
+            return Ok(());
+        }
+        Err(error) => {
+            emit_status("error");
+            return Err(error);
+        }
     };
 
     if let Some(update) = update {
+        emit_status("available");
         update
             .download_and_install(|_downloaded, _total| {}, || {})
             .await?;
         app_handle.restart();
     } else {
+        emit_status("none");
+
         #[cfg(not(target_os = "linux"))]
         {
             use tauri_plugin_notification::NotificationExt;
-            app_handle
+            let _ = app_handle
                 .notification()
                 .builder()
                 .title("No updates available")
-                .show()
-                .unwrap();
+                .show();
         }
     }
 

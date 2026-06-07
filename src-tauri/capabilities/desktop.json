@@ -6,16 +6,19 @@
     "updater:default",
     "core:default",
     "fs:default",
-    "fs:read-all",
-    "fs:read-files",
-    "fs:allow-read-file",
-    "fs:allow-write-file",
-    "fs:allow-read-dir",
-    "fs:allow-remove",
-    "fs:allow-exists",
     {
       "identifier": "fs:scope",
-      "allow": ["**"]
+      "allow": [
+        "$APPDATA",
+        "$APPDATA/**",
+        "$APPCACHE",
+        "$APPCACHE/**",
+        "$APPLOCALDATA",
+        "$APPLOCALDATA/**",
+        "$APPLOG",
+        "$APPLOG/**",
+        "$TEMP/steam-game-idler/**"
+      ]
     },
     "core:window:allow-create",
     "core:window:allow-maximize",

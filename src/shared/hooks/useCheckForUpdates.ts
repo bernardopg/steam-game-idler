@@ -1,9 +1,10 @@
+import { listen } from '@tauri-apps/api/event'
 import { platform } from '@tauri-apps/plugin-os'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { showDangerToast } from '@/shared/components'
+import { showDangerToast, showPrimaryToast } from '@/shared/components'
 import { useUpdateStore } from '@/shared/stores'
 import {
   fetchLatest,
@@ -66,4 +67,32 @@ export function useCheckForUpdates() {
       setShowChangelog(true)
     }
   }, [setShowChangelog])
+
+  useEffect(() => {
+    // Surface feedback for the tray "Check for updates" action, which runs in
+    // the Rust backend. Native notifications are disabled on Linux, so the
+    // backend emits this event as the cross-platform feedback channel.
+    if (!isTauri()) return
+
+    const unlistenPromise = listen<string>('update_check_status', event => {
+      switch (event.payload) {
+        case 'available':
+          setUpdateAvailable(true)
+          break
+        case 'none':
+          showPrimaryToast(t('toast.checkUpdate.none'))
+          break
+        case 'managed_by_package_manager':
+          showPrimaryToast(t('toast.checkUpdate.managed_by_package_manager'))
+          break
+        case 'error':
+          showDangerToast(t('toast.checkUpdate.error'))
+          break
+      }
+    })
+
+    return () => {
+      unlistenPromise.then(unlisten => unlisten())
+    }
+  }, [setUpdateAvailable, t])
 }

@@ -1,11 +1,11 @@
-use crate::utils::{get_cache_dir, get_steam_location};
+use crate::utils::{create_private_dir_all, get_cache_dir, get_steam_location};
 use regex::Regex;
 use reqwest::Client;
 use serde_json;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
-use std::fs::{create_dir_all, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
@@ -104,8 +104,7 @@ pub async fn get_user_summary(
             }
 
             let app_data_dir = get_cache_dir(&app_handle)?;
-            create_dir_all(&app_data_dir)
-                .map_err(|e| format!("Failed to create app directory: {}", e))?;
+            create_private_dir_all(&app_data_dir)?;
 
             let file_path = app_data_dir.join("user_summaries.json");
 

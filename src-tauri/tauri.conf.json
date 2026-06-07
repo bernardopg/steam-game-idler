@@ -12,7 +12,7 @@
   },
   "bundle": {
     "active": true,
-    "category": "Utility",
+    "category": "Game;Utility",
     "copyright": "Copyright © 2024-2026 zevnda",
     "targets": "all",
     "externalBin": [],
@@ -45,6 +45,9 @@
     "linux": {
       "deb": {
         "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libssl3", "libayatana-appindicator3-1"]
+      },
+      "appimage": {
+        "bundleMediaFramework": true
       }
     },
     "licenseFile": "LICENSE",

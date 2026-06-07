@@ -1,4 +1,4 @@
-use crate::utils::{get_cache_dir, get_user_data_dir};
+use crate::utils::{create_private_dir_all, get_cache_dir, get_user_data_dir};
 use serde_json::{json, Value};
 use std::fs;
 use std::fs::File;
@@ -98,13 +98,7 @@ fn copy_directory_contents(source_dir: &Path, target_dir: &Path) -> Result<(), S
         return Ok(());
     }
 
-    fs::create_dir_all(target_dir).map_err(|e| {
-        format!(
-            "Failed to create migration target directory {}: {}",
-            target_dir.display(),
-            e
-        )
-    })?;
+    create_private_dir_all(target_dir)?;
 
     for entry in fs::read_dir(source_dir).map_err(|e| {
         format!(
@@ -179,8 +173,7 @@ fn get_settings_file_path(
     let app_data_dir = get_user_data_dir(app_handle)?.join(steam_id);
 
     if !app_data_dir.exists() {
-        fs::create_dir_all(&app_data_dir)
-            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+        create_private_dir_all(&app_data_dir)?;
     }
 
     let settings_file_path = app_data_dir.join("settings.json");
@@ -355,11 +348,8 @@ pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Res
                             if file.read_to_string(&mut contents).is_ok() {
                                 if let Ok(settings) = serde_json::from_str::<Value>(&contents) {
                                     if let Some(general) = settings.get("general") {
-                                        if let Some(start_minimized) = general.get("startMinimized")
-                                        {
-                                            return Some(
-                                                start_minimized.as_bool().unwrap_or(false),
-                                            );
+                                        if let Some(start_minimized) = general.get("startMinimized") {
+                                            return Some(start_minimized.as_bool().unwrap_or(false));
                                         }
                                     }
                                 }

@@ -9,6 +9,7 @@ use regex::Regex;
 use reqwest::Client;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::fs;
 use std::sync::Mutex;
 use std::time::Duration;
 use steamlocate::SteamDir;
@@ -20,6 +21,20 @@ pub struct DrpClient(pub Mutex<Option<(DiscordIpcClient, i64)>>);
 
 lazy_static! {
     static ref LAST_KNOWN_TITLES: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+}
+
+pub fn create_private_dir_all(path: &std::path::Path) -> Result<(), String> {
+    fs::create_dir_all(path).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    #[cfg(target_os = "linux")]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+            .map_err(|e| format!("Failed to secure directory permissions: {}", e))?;
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -191,6 +206,39 @@ pub async fn anti_away() -> Result<(), String> {
     spawn_url("steam://friends/status/online")
 }
 
+// Verify that `candidate` resolves to a location inside `base`, defending
+// against path traversal (e.g. `../../etc`). The candidate file may not exist
+// yet (e.g. log.txt on first run), so we canonicalize `base` and the nearest
+// existing ancestor of the candidate, then require the ancestor to stay within
+// base. Returns the (non-canonicalized) candidate when it is contained.
+fn ensure_path_within_base(
+    base: &std::path::Path,
+    candidate: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    if !base.exists() {
+        return Ok(candidate.to_path_buf());
+    }
+
+    let canonical_base = base
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve base directory: {}", e))?;
+
+    let existing_ancestor = candidate
+        .ancestors()
+        .find(|p| p.exists())
+        .ok_or_else(|| "Could not resolve target path".to_string())?;
+
+    let canonical_ancestor = existing_ancestor
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve target path: {}", e))?;
+
+    if canonical_ancestor.starts_with(&canonical_base) {
+        Ok(candidate.to_path_buf())
+    } else {
+        Err("Target path is outside the allowed directory".to_string())
+    }
+}
+
 #[tauri::command]
 pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<(), String> {
     let user_data_dir = get_user_data_dir(&app_handle)?;
@@ -200,6 +248,17 @@ pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<
     } else {
         path.replace('\\', &std::path::MAIN_SEPARATOR.to_string())
     };
+
+    // Reject absolute paths and parent-dir traversal outright — every legit
+    // caller passes a relative path under the user-data/cache dir.
+    if std::path::Path::new(&normalized_path).is_absolute()
+        || normalized_path
+            .split(std::path::MAIN_SEPARATOR)
+            .any(|seg| seg == "..")
+    {
+        return Err("Invalid path".to_string());
+    }
+
     let user_data_target = user_data_dir.join(&normalized_path);
     let cache_target = cache_dir.join(&normalized_path);
     let settings_suffix = format!("{}settings.json", std::path::MAIN_SEPARATOR);
@@ -211,6 +270,12 @@ pub fn open_file_explorer(path: String, app_handle: tauri::AppHandle) -> Result<
     } else {
         cache_target
     };
+
+    // Defense in depth: confirm the resolved target stays inside one of the
+    // app-owned directories before handing it to a file manager. If the base
+    // directory does not exist yet (first boot), allow the relative candidate.
+    let target_path = ensure_path_within_base(&user_data_dir, &target_path)
+        .or_else(|_| ensure_path_within_base(&cache_dir, &target_path))?;
 
     #[cfg(windows)]
     {

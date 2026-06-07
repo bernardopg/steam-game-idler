@@ -1,14 +1,35 @@
-use crate::utils::{get_cache_dir, get_user_data_dir};
+use crate::utils::{create_private_dir_all, get_cache_dir, get_user_data_dir};
 use chrono::Local;
-use std::fs::{copy, create_dir_all, OpenOptions};
+use lazy_static::lazy_static;
+use regex::Regex;
+use std::fs::{copy, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 
 const MAX_LINES: usize = 500;
 
+lazy_static! {
+    // Steam Web API key: 32 hex chars. Mask the value, keeping the `key=` prefix
+    // when present so the log line still reads coherently.
+    static ref API_KEY_RE: Regex =
+        Regex::new(r"(?i)\b([0-9A-F]{32})\b").unwrap();
+    // steamLoginSecure / sessionid cookie or token values (long alphanumeric /
+    // url-encoded runs after the cookie name).
+    static ref STEAM_LOGIN_RE: Regex =
+        Regex::new(r"(?i)(steamLoginSecure|sessionid|steamparental)([=:]\s*)([^\s;&]+)").unwrap();
+}
+
+// Mask values that match known-sensitive dynamic patterns (API key, login
+// cookies). This complements the fixed-token masking below for data whose exact
+// value isn't known ahead of time.
+fn mask_sensitive_patterns(message: &str) -> String {
+    let masked = STEAM_LOGIN_RE.replace_all(message, "$1$2********");
+    API_KEY_RE.replace_all(&masked, "********").to_string()
+}
+
 fn get_log_file_path(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
     let app_data_dir = get_user_data_dir(app_handle)?;
-    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
+    create_private_dir_all(&app_data_dir)?;
 
     let log_file_path = app_data_dir.join("log.txt");
     if !log_file_path.exists() {
@@ -40,7 +61,8 @@ pub fn log_event(message: String, app_handle: tauri::AppHandle) -> Result<(), St
         .collect();
     // Create a new log entry with a timestamp
     let timestamp = Local::now().format("%b %d %H:%M:%S%.3f").to_string();
-    let mask_one = mask_sensitive_data(&message, "711B8063");
+    let mask_dynamic = mask_sensitive_patterns(&message);
+    let mask_one = mask_sensitive_data(&mask_dynamic, "711B8063");
     let mask_two = mask_sensitive_data(&mask_one, "3DnyBUX");
     let mask_three = mask_sensitive_data(&mask_two, "5e2699aef2301b283");
     let new_log = format!("{} + {}", timestamp, mask_three);

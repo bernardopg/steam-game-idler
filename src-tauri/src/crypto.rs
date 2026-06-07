@@ -1,5 +1,15 @@
-use aes::cipher::{generic_array::GenericArray, KeyInit};
-use aes::Aes256;
+//! Build-time API key obfuscation.
+//!
+//! IMPORTANT: this is **obfuscation, not encryption**. The key is XOR-masked
+//! with a deterministic, source-visible mask and embedded in the binary at
+//! compile time. Anyone with the binary can recover the original value with a
+//! few lines of code, since both the SEED/SALT and the derivation are public.
+//!
+//! This exists only to keep the Steam Web API key out of plaintext `strings`
+//! output — it is a speed bump, not a security boundary. The Steam Web API key
+//! is semi-public, rate-limited and has no destructive scope, so this trade-off
+//! is acceptable. Do not rely on this for protecting real secrets.
+
 use std::env;
 
 const SEED: [u8; 32] = [
@@ -11,7 +21,8 @@ const SALT: [u8; 16] = [
     0x73, 0x61, 0x6c, 0x74, 0x5f, 0x66, 0x6f, 0x72, 0x5f, 0x61, 0x70, 0x69, 0x5f, 0x6b, 0x65, 0x79,
 ];
 
-const fn derive_aes_key() -> [u8; 32] {
+/// Derive the deterministic XOR mask used to obfuscate the embedded key.
+const fn derive_obfuscation_mask() -> [u8; 32] {
     let mut key = [0u8; 32];
     let mut i = 0;
 
@@ -35,63 +46,50 @@ const fn derive_aes_key() -> [u8; 32] {
     key
 }
 
-const fn encrypt_api_key_const(api_key: &str) -> ([u8; 64], usize) {
-    let key = derive_aes_key();
+/// Obfuscate an API key at compile time into a fixed-size buffer.
+const fn obfuscate_api_key_const(api_key: &str) -> ([u8; 64], usize) {
+    let mask = derive_obfuscation_mask();
     let api_bytes = api_key.as_bytes();
     let api_len = api_bytes.len();
 
-    let mut encrypted = [0u8; 64];
+    let mut obfuscated = [0u8; 64];
     let mut i = 0;
     while i < api_len && i < 64 {
-        encrypted[i] = api_bytes[i] ^ key[i % 32] ^ ((i as u8).wrapping_mul(7));
+        obfuscated[i] = api_bytes[i] ^ mask[i % 32] ^ ((i as u8).wrapping_mul(7));
         i += 1;
     }
 
-    (encrypted, api_len)
+    (obfuscated, api_len)
 }
 
-pub fn decrypt_api_key() -> String {
+/// Recover the embedded API key, or an empty string when none was baked in.
+pub fn deobfuscate_api_key() -> String {
     match option_env!("STEAM_API_KEY") {
         Some(_compile_time_key) => {
-            const ENCRYPTED_DATA: ([u8; 64], usize) = {
+            const OBFUSCATED_DATA: ([u8; 64], usize) = {
                 match option_env!("STEAM_API_KEY") {
-                    Some(key) => encrypt_api_key_const(key),
+                    Some(key) => obfuscate_api_key_const(key),
                     None => ([0u8; 64], 0),
                 }
             };
 
-            let (encrypted_data, original_len) = ENCRYPTED_DATA;
+            let (obfuscated_data, original_len) = OBFUSCATED_DATA;
 
-            let key = derive_aes_key();
+            let mask = derive_obfuscation_mask();
 
-            let mut decrypted = Vec::with_capacity(original_len);
+            let mut recovered = Vec::with_capacity(original_len);
             for i in 0..original_len {
-                let decrypted_byte = encrypted_data[i] ^ key[i % 32] ^ ((i as u8).wrapping_mul(7));
-                decrypted.push(decrypted_byte);
+                let byte = obfuscated_data[i] ^ mask[i % 32] ^ ((i as u8).wrapping_mul(7));
+                recovered.push(byte);
             }
 
-            String::from_utf8_lossy(&decrypted).to_string()
+            String::from_utf8_lossy(&recovered).to_string()
         }
         None => String::new(),
     }
 }
 
-pub fn decrypt_api_key_with_aes() -> String {
-    let basic_key = decrypt_api_key();
-    if basic_key.is_empty() {
-        return basic_key;
-    }
-    if cfg!(not(debug_assertions)) {
-        let key_bytes = derive_aes_key();
-        let aes_key = GenericArray::from_slice(&key_bytes);
-        let _cipher = Aes256::new(aes_key);
-
-        basic_key
-    } else {
-        basic_key
-    }
-}
-
+/// Read the API key from the environment (dev / user-provided path).
 pub fn get_api_key_from_env() -> Result<String, String> {
     env::var("KEY")
         .or_else(|_| env::var("STEAM_API_KEY"))

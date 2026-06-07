@@ -1,4 +1,4 @@
-use crate::utils::get_cache_dir;
+use crate::utils::{create_private_dir_all, get_cache_dir};
 use serde_json::{json, Value};
 use std::fs;
 use std::fs::File;
@@ -17,8 +17,7 @@ pub async fn get_achievement_order(
 
     // Create cache directory if it doesn't exist
     if !app_data_dir.exists() {
-        fs::create_dir_all(&app_data_dir)
-            .map_err(|e| format!("Failed to create achievement data directory: {}", e))?;
+        create_private_dir_all(&app_data_dir)?;
     }
 
     let file_name = format!("{}_order.json", app_id);
@@ -51,8 +50,7 @@ pub async fn save_achievement_order(
 
     // Create cache directory if it doesn't exist
     if !app_data_dir.exists() {
-        fs::create_dir_all(&app_data_dir)
-            .map_err(|e| format!("Failed to create achievement data directory: {}", e))?;
+        create_private_dir_all(&app_data_dir)?;
     }
 
     let file_name = format!("{}_order.json", app_id);
@@ -83,8 +81,7 @@ pub async fn get_custom_lists(
 
     // Create cache directory if it doesn't exist
     if !app_data_dir.exists() {
-        fs::create_dir_all(&app_data_dir)
-            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+        create_private_dir_all(&app_data_dir)?;
     }
 
     // Determine file name based on list type

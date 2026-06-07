@@ -1,12 +1,11 @@
 use crate::command_runner::apply_hidden_command_style;
-use crate::utils::{get_cache_dir, get_lib_path};
+use crate::utils::{create_private_dir_all, get_cache_dir, get_lib_path};
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::fs::File;
-use std::fs::{create_dir_all, remove_dir_all, remove_file, OpenOptions};
+use std::fs::{File, OpenOptions, remove_dir_all, remove_file};
 use std::io::Read;
 use std::io::Write;
 use tauri::Manager;
@@ -30,8 +29,8 @@ pub async fn get_games_list(
     api_key: Option<String>,
     app_handle: tauri::AppHandle,
 ) -> Result<Value, String> {
-    let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
-    create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app directory: {}", e))?;
+let app_data_dir = get_cache_dir(&app_handle)?.join(steam_id.clone());
+            create_private_dir_all(&app_data_dir)?;
 
     let temp_games_file = app_data_dir.join("temp_owned_games.json");
     let temp_games_file_str = temp_games_file.to_string_lossy().to_string();
