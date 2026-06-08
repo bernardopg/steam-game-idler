@@ -12,7 +12,7 @@
   },
   "bundle": {
     "active": true,
-    "category": "Game;Utility",
+    "category": "Game",
     "copyright": "Copyright © 2024-2026 zevnda",
     "targets": "all",
     "externalBin": [],
