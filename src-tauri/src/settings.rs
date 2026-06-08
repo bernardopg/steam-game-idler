@@ -348,8 +348,11 @@ pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Res
                             if file.read_to_string(&mut contents).is_ok() {
                                 if let Ok(settings) = serde_json::from_str::<Value>(&contents) {
                                     if let Some(general) = settings.get("general") {
-                                        if let Some(start_minimized) = general.get("startMinimized") {
-                                            return Some(start_minimized.as_bool().unwrap_or(false));
+                                        if let Some(start_minimized) = general.get("startMinimized")
+                                        {
+                                            return Some(
+                                                start_minimized.as_bool().unwrap_or(false),
+                                            );
                                         }
                                     }
                                 }

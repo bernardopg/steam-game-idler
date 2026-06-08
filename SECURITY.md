@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest (current) version of this repository is supported with security updates and patches.  
+Only the latest (current) version of this repository is supported with security updates and patches.
 Please ensure you are using the most up-to-date version before reporting vulnerabilities.
 
 ## Reporting a Vulnerability
