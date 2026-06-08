@@ -1,9 +1,9 @@
 [package]
 name = "steam-game-idler"
 version = "5.0.16"
-authors = ["zevnda"]
+authors = ["zevnda", "Bernardo Pinto Gomes"]
 license = "GPL-3.0"
-repository = "https://github.com/zevnda/steam-game-idler"
+repository = "https://github.com/bernardopg/steam-game-idler"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -61,7 +61,7 @@ winapi = { version = "0.3.9", features = [
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2.5.0"
 tauri-plugin-updater = "2.9.0"
-tauri-plugin-window-state = { git = "https://github.com/zevnda/plugins-workspace-custom" }
+tauri-plugin-window-state = "2"
 
 [profile.dev]
 opt-level = 1
