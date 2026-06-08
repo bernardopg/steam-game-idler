@@ -197,7 +197,7 @@ export default function PrivacyPolicy() {
             </p>
             <ul className='list-disc pl-6 space-y-2'>
               <li>
-                <strong>Windows:</strong> %AppData%\Roaming\com.zevnda.steam-game-idler
+                <strong>Windows:</strong> %AppData%\Roaming\com.github.bernardopg.SteamGameIdler
               </li>
             </ul>
           </section>

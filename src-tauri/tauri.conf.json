@@ -3,7 +3,7 @@
   "productName": "Steam Game Idler",
   "mainBinaryName": "Steam Game Idler",
   "version": "5.0.16",
-  "identifier": "com.zevnda.steam-game-idler",
+  "identifier": "com.github.bernardopg.SteamGameIdler",
   "build": {
     "beforeDevCommand": "pnpm run dev",
     "beforeBuildCommand": "pnpm run build",
@@ -13,7 +13,7 @@
   "bundle": {
     "active": true,
     "category": "Game",
-    "copyright": "Copyright © 2024-2026 zevnda",
+    "copyright": "Copyright © 2024-2026 zevnda; fork © 2025-2026 Bernardo Pinto Gomes",
     "targets": "all",
     "externalBin": [],
     "icon": [
@@ -55,8 +55,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQyMTE5REMyMUFGRUYyQzcKUldUSDh2NGF3cDBSMGh6UVk2a1NKNFV0d1BBcnZsRnFFdDkvTTR0KzJQN0hjOTJzSWFpMFhGaysK",
-      "endpoints": ["https://raw.githubusercontent.com/zevnda/steam-game-idler/main/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUyNzNGQjBCQTk0MkZFRjAKUldUdy9rS3BDL3R6NHJSdWdJZncySXJ0K0NOT01kelMydFlVUEhPQ0VTR1hiWXNISlpLZzZ2cWUK",
+      "endpoints": [
+        "https://raw.githubusercontent.com/bernardopg/steam-game-idler/main/latest.json"
+      ],
       "windows": {
         "installMode": "passive"
       }
