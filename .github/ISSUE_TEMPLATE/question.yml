@@ -2,7 +2,7 @@ name: Question
 description: Ask a question about Steam Game Idler
 labels: ["question"]
 assignees:
-  - "zevnda"
+  - "bernardopg"
 body:
   - type: textarea
     id: question

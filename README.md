@@ -5,22 +5,47 @@
 
 Steam Game Idler (SGI) is a Steam automation tool for farming trading cards, managing achievements, and boosting playtime across all games in your Steam library.
 
+This is a **cross-platform fork** of [`zevnda/steam-game-idler`](https://github.com/zevnda/steam-game-idler) that adds first-class **Linux** support by delegating all Steam operations to the sibling [`steam-utility-multiplataform`](https://github.com/bernardopg/steam-utility-multiplataform) .NET CLI, plus native Linux packaging (`.deb`, `.rpm`, `.AppImage`, AUR).
+
 See how it stacks up against other software, such as [ArchiSteamFarm](https://steamgameidler.com/alternatives/archisteamfarm), [Steam Achievement Manager](https://steamgameidler.com/alternatives/steam-achievement-manager), and [Idle Master](https://steamgameidler.com/alternatives/idle-master).
 
-[![Downloads][downloads]](https://github.com/zevnda/steam-game-idler/releases)
-[![Release][release]](https://github.com/zevnda/steam-game-idler/releases/latest)
-![Build][build]
+[![Release][release]](https://github.com/bernardopg/steam-game-idler/releases/latest)
+[![Build][build]](https://github.com/bernardopg/steam-game-idler/actions/workflows/release.yml)
+[![CI][ci]](https://github.com/bernardopg/steam-game-idler/actions/workflows/ci.yml)
+[![License][license-badge]](./LICENSE)
 
 <img src="./public/example.png" width="700" alt="example image"><br />
 </div>
 
 # Installation
-You must have the **[Steam client](https://store.steampowered.com/about)** installed, running, and signed in to at least one account
+You must have the **[Steam client](https://store.steampowered.com/about)** installed, running, and signed in to at least one account.
 
-1. Download the `setup.exe` installer from the **[releases page](https://github.com/zevnda/steam-game-idler/releases/latest)**
+Grab the latest build from the **[releases page](https://github.com/bernardopg/steam-game-idler/releases/latest)**:
+
+### Windows
+1. Download the `setup.exe` installer (or the portable `.zip`)
 2. Run the installer and follow the steps
 
-Or if you prefer, you can **[build it yourself](https://steamgameidler.com/docs/get-started/build-it-yourself)**
+### Linux
+- **Debian/Ubuntu** — install the `.deb`:
+  ```bash
+  sudo apt install ./steam-game-idler_*.deb
+  ```
+- **Fedora/RHEL** — install the `.rpm`:
+  ```bash
+  sudo dnf install ./steam-game-idler-*.rpm
+  ```
+- **Any distro** — download the `.AppImage`, mark it executable, and run it:
+  ```bash
+  chmod +x steam-game-idler_*.AppImage
+  ./steam-game-idler_*.AppImage
+  ```
+- **Arch Linux (AUR)** — install via your AUR helper:
+  ```bash
+  yay -S steam-game-idler-git
+  ```
+
+Or build it yourself — see [Linux Development](#linux-development) below, or the upstream **[build guide](https://steamgameidler.com/docs/get-started/build-it-yourself)**.
 
 # Linux Development
 This fork includes a Linux development path that uses the sibling `steam-utility-multiplataform` repository.
@@ -50,7 +75,7 @@ Refer to the **[documentation](https://steamgameidler.com/docs/)** for a detaile
 * **Actively Maintained**: Regular updates with new features and bug fixes
 
 # Supported Languages
-Contribute to this project by adding new translations or improving existing ones. **[Read more here](https://github.com/zevnda/steam-game-idler/discussions/148)**
+Contribute to this project by adding new translations or improving existing ones. Open an issue or PR on **[this fork](https://github.com/bernardopg/steam-game-idler/issues)**, or see the upstream **[translation guide](https://github.com/zevnda/steam-game-idler/discussions/148)**.
 
 | Language             | Flag | Language            | Flag | Language   | Flag |
 | -------------------- | ---- | ------------------- | ---- | ---------- | ---- |
@@ -63,11 +88,17 @@ Contribute to this project by adding new translations or improving existing ones
 
 <sup>*Some languages may only have partial support*</sup>
 
+# Credits
+This fork builds on the original **[Steam Game Idler](https://github.com/zevnda/steam-game-idler)** by [zevnda](https://github.com/zevnda). All credit for the original application goes to the upstream author.
+
 # License
-Copyright © 2024-2026 zevnda — **[MIT License](./LICENSE)**
+Released under the **[MIT License](./LICENSE)**.
 
-[downloads]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapibase.vercel.app%2Fapi%2Fgh-downloads%3Fuser%3Dzevnda%26repo%3Dsteam-game-idler&query=results.grandTotal&style=flat-square&color=%23a82869&label=Downloads
-[release]: https://img.shields.io/github/v/release/zevnda/steam-game-idler?style=flat-square&color=%232d6acc&label=Version
+Copyright © 2024-2026 zevnda (original author)<br />
+Copyright © 2025-2026 Bernardo Pinto Gomes (fork maintainer)
 
-[build]: https://img.shields.io/github/actions/workflow/status/zevnda/steam-game-idler/release.yml?style=flat-square&color=%2313a135&label=Build
+[release]: https://img.shields.io/github/v/release/bernardopg/steam-game-idler?style=flat-square&color=%232d6acc&label=Version
+[build]: https://img.shields.io/github/actions/workflow/status/bernardopg/steam-game-idler/release.yml?style=flat-square&color=%2313a135&label=Build
+[ci]: https://img.shields.io/github/actions/workflow/status/bernardopg/steam-game-idler/ci.yml?style=flat-square&color=%232d6acc&label=CI
+[license-badge]: https://img.shields.io/github/license/bernardopg/steam-game-idler?style=flat-square&color=%23a82869&label=License
 

@@ -2,14 +2,14 @@ name: Issue/Bug Report
 description: Report a bug or issue
 labels: ["bug"]
 assignees:
-  - "zevnda"
+  - "bernardopg"
 body:
   - type: checkboxes
     id: terms
     attributes:
       label: Pre-report Checklist
       options:
-        - label: I have searched for similar [open/closed issues](https://github.com/zevnda/steam-game-idler/issues)
+        - label: I have searched for similar [open/closed issues](https://github.com/bernardopg/steam-game-idler/issues)
           required: true
         - label: I have tried the [Troubleshooting](https://steamgameidler.com/docs/troubleshooting) steps for my issue
           required: true
