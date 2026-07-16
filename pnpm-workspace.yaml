@@ -6,6 +6,9 @@ allowBuilds:
   esbuild: true
   sharp: true
 overrides:
+  '@babel/core': '^7.29.1'
+  esbuild: '^0.28.1'
+  js-yaml: '^4.1.2'
   postcss: '^8.5.14'
   path-to-regexp: '>=8.4.0'
   picomatch: '>=4.0.4'
