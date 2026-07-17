@@ -1,7 +1,7 @@
 import type { CardFarmingUser, UserSettings } from '@/shared/types'
 import i18next from 'i18next'
 import { showDangerToast } from '@/shared/components'
-import { logEvent } from '@/shared/utils'
+import { decrypt, logEvent } from '@/shared/utils'
 
 export const getStoredSettings = async (
   userSettings: UserSettings,
@@ -21,8 +21,8 @@ export const getStoredSettings = async (
 
     if (credentials && credentials.sid && credentials.sls) {
       setHasCookies(true)
-      setSidValue(credentials.sid)
-      setSlsValue(credentials.sls)
+      setSidValue(decrypt(credentials.sid))
+      setSlsValue(decrypt(credentials.sls))
       setSmaValue(credentials?.sma || '')
     }
     if (cardFarmingUser?.steamId) {

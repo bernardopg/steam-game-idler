@@ -9,6 +9,15 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
+fn parse_user_summary_response(response_text: &str) -> Value {
+    serde_json::from_str(response_text).unwrap_or_else(|_| {
+        // The profile lookup is optional (for example, when the user has not
+        // configured an API key). Keep the command contract stable when Steam
+        // returns an HTML error page instead of JSON.
+        json!({ "response": { "players": [] } })
+    })
+}
+
 #[tauri::command]
 // Get Steam users
 pub async fn get_users() -> Result<Value, String> {
@@ -74,7 +83,7 @@ pub async fn get_user_summary(
     match client.get(&url).send().await {
         Ok(response) => {
             let response_text = response.text().await.map_err(|e| e.to_string())?;
-            let body: Value = serde_json::from_str(&response_text).map_err(|e| e.to_string())?;
+            let body = parse_user_summary_response(&response_text);
 
             // Validate the response structure and check for players
             let (should_cache, valid_players) = if let Some(response_obj) = body.get("response") {
@@ -168,6 +177,25 @@ pub async fn get_user_summary(
             Ok(body)
         }
         Err(err) => Err(err.to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_user_summary_response;
+
+    #[test]
+    fn uses_an_empty_player_list_when_steam_returns_non_json() {
+        let response = parse_user_summary_response("<html>Access Denied</html>");
+
+        assert_eq!(response["response"]["players"], serde_json::json!([]));
+    }
+
+    #[test]
+    fn preserves_valid_steam_json() {
+        let response = parse_user_summary_response(r#"{"response":{"players":[{"steamid":"1"}]}}"#);
+
+        assert_eq!(response["response"]["players"][0]["steamid"], "1");
     }
 }
 

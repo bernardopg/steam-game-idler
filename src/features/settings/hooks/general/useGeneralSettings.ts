@@ -2,6 +2,7 @@ import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { platform } from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
 import { useUserStore } from '@/shared/stores'
+import { decrypt } from '@/shared/utils'
 import { isTauri } from '@/shared/utils/tauri'
 
 export const useGeneralSettings = () => {
@@ -30,7 +31,10 @@ export const useGeneralSettings = () => {
     const apiKey = userSettings.general.apiKey
     if (apiKey && apiKey.length > 0) {
       setHasKey(true)
-      setKeyValue(apiKey)
+      setKeyValue(decrypt(apiKey))
+    } else {
+      setHasKey(false)
+      setKeyValue('')
     }
   }, [userSettings.general.apiKey])
 

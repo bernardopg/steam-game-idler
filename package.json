@@ -25,6 +25,8 @@
     "prettier": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "check:tauri-versions": "node scripts/check-tauri-versions.mjs",
+    "check:release-version": "node scripts/check-release-version.mjs",
+    "set:release-version": "node scripts/set-release-version.mjs",
     "td": "tauri dev",
     "tb": "tauri build",
     "dd": "pnpm --filter steam-game-idler-docs dev",

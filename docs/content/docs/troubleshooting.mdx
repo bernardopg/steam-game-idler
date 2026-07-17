@@ -60,6 +60,14 @@ This page covers common issues and their solutions when using Steam Game Idler.
 - Check if Windows Defender is blocking the application
 - Restart your computer and try again
 
+#### Settings Missing After an Update
+**Symptoms:** SGI asks for your Steam API key or card-farming credentials again after upgrading.
+
+**Solutions:**
+- Start the updated app once and allow it to finish opening. SGI automatically imports settings and sign-in state from the previous application data location when needed.
+- Do not delete either application-data folder while diagnosing an update. The migration is one-time, preserves values already saved by the new version, and does not import old log history.
+- If credentials are still missing, close SGI and include only non-sensitive log timestamps and application version when opening an issue. Never include your API key, `sessionid`, or `steamLoginSecure` values.
+
 ### Card Farming Issues
 
 #### No Cards Dropping

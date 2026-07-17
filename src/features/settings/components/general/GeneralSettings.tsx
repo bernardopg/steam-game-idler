@@ -10,17 +10,24 @@ import {
 } from '@/features/settings'
 import { ExtLink, LanguageSwitch, ProBadge, SettingsSwitch } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
-import { hasGamerFeature } from '@/shared/utils'
+import { decrypt, hasGamerFeature } from '@/shared/utils'
 
 export const GeneralSettings = () => {
   const { t } = useTranslation()
   const userSummary = useUserStore(state => state.userSummary)
+  const userSettings = useUserStore(state => state.userSettings)
   const setUserSettings = useUserStore(state => state.setUserSettings)
   const isPro = useUserStore(state => state.isPro)
   const proTier = useUserStore(state => state.proTier)
   const setProModalOpen = useStateStore(state => state.setProModalOpen)
   const setProModalRequiredTier = useStateStore(state => state.setProModalRequiredTier)
   const { keyValue, setKeyValue, hasKey, setHasKey, osPlatform } = useGeneralSettings()
+  const savedKeyValue = userSettings?.general.apiKey ? decrypt(userSettings.general.apiKey) : ''
+  const isKeyUnchanged = hasKey && keyValue === savedKeyValue
+
+  const handleAvatarImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = '/logo.png'
+  }
 
   return (
     <div className='relative flex flex-col gap-4 mt-9 pb-16 w-4/5'>
@@ -37,12 +44,13 @@ export const GeneralSettings = () => {
       <div className='flex flex-col gap-3 mt-4'>
         <div className='flex items-end gap-4 w-fit group'>
           <Image
-            src={userSummary?.avatar || '/fallback.webp'}
+            src={userSummary?.avatar || '/logo.png'}
             height={64}
             width={64}
             alt='user avatar'
             className='w-16 h-16 rounded-full transition-all duration-200'
             priority
+            onError={handleAvatarImageError}
           />
           <div className='flex flex-col gap-1'>
             <p className='text-xs text-altwhite font-bold'>{t('settings.general.displayName')}</p>
@@ -251,7 +259,7 @@ export const GeneralSettings = () => {
                 size='sm'
                 className='bg-btn-secondary text-btn-text font-bold'
                 radius='full'
-                isDisabled={hasKey || !keyValue}
+                isDisabled={!keyValue.trim() || isKeyUnchanged}
                 onPress={() =>
                   handleSteamWebAPIKeySave(
                     userSummary?.steamId,

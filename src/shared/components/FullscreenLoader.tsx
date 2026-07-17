@@ -10,7 +10,7 @@ export const FullscreenLoader = ({ loaderFadeOut = false }: { loaderFadeOut?: bo
   return (
     <div
       className={cn(
-        'fixed inset-0 w-screen h-screen z-9998 bg-base transition-opacity duration-250',
+        'fixed inset-0 z-9998 h-screen w-screen bg-black transition-opacity duration-250',
         {
           'opacity-0 pointer-events-none': loaderFadeOut,
           'opacity-100': !loaderFadeOut,
@@ -23,13 +23,13 @@ export const FullscreenLoader = ({ loaderFadeOut = false }: { loaderFadeOut?: bo
         loop
         muted
         playsInline
-        className='w-screen h-screen object-cover absolute blur inset-0'
+        className='absolute inset-0 h-screen w-screen object-cover blur'
       />
-      <div className='flex flex-col space-y-10 absolute inset-0 items-center justify-center z-10'>
-        <p className={`${unbounded.className} text-4xl font-black uppercase text-content`}>
+      <div className='absolute inset-0 z-10 flex flex-col items-center justify-center space-y-10'>
+        <p className={`${unbounded.className} text-4xl font-black uppercase text-white`}>
           Steam Game Idler
         </p>
-        <Spinner size='lg' variant='simple' color='white' />
+        <Spinner className='text-white' color='current' size='lg' />
       </div>
     </div>
   )

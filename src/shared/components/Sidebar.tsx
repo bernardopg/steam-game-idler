@@ -48,6 +48,10 @@ export const Sidebar = () => {
     setActivePage,
   )
 
+  const handleAvatarImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = '/logo.png'
+  }
+
   const effectivePage = activePage === 'settings' ? previousActivePage : activePage
 
   const mainSidebarItems: SidebarItem[] = [
@@ -317,11 +321,12 @@ export const Sidebar = () => {
           >
             <div className={cn('relative shrink-0', sidebarCollapsed ? 'w-7 h-7' : 'w-8 h-8')}>
               <Image
-                src={userSummary?.avatar || '/fallback.webp'}
+                src={userSummary?.avatar || '/logo.png'}
                 alt={userSummary?.personaName || 'User Avatar'}
                 width={sidebarCollapsed ? 28 : 32}
                 height={sidebarCollapsed ? 28 : 32}
                 className='rounded-full bg-white'
+                onError={handleAvatarImageError}
               />
             </div>
 

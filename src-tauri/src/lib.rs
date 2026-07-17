@@ -171,6 +171,12 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     idling::cleanup_idle_work_root();
 
     let app_handle = app.handle();
+    if let Err(error) = settings::migrate_legacy_app_data(&app_handle) {
+        // Never prevent the application from starting because an old, possibly corrupt,
+        // profile could not be imported. No migration marker is written on failure, so a
+        // later launch can retry after the user fixes filesystem permissions.
+        eprintln!("[Settings Migration] Legacy profile migration failed: {error}");
+    }
     setup_window(&app_handle)?;
     if should_setup_tray_icon() {
         setup_tray_icon(app)?;

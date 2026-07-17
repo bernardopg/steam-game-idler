@@ -11,7 +11,7 @@ import {
 import { handleSaveCredentials } from '@/features/settings/utils/steam-credentials/handleSteamCredentials'
 import { CustomModal, ExtLink, ProBadge, showDangerToast } from '@/shared/components'
 import { useStateStore, useUserStore } from '@/shared/stores'
-import { hasGamerFeature, logEvent } from '@/shared/utils'
+import { decrypt, hasGamerFeature, logEvent } from '@/shared/utils'
 import { invoke, isTauri } from '@/shared/utils/tauri'
 
 export const SteamCredentials = () => {
@@ -24,6 +24,15 @@ export const SteamCredentials = () => {
   const proTier = useUserStore(state => state.proTier)
   const cardSettings = useCardSettings()
   const { isOpen, onOpenChange } = useDisclosure()
+  const storedCredentials = userSettings.cardFarming.credentials
+  const storedSidValue = storedCredentials?.sid ? decrypt(storedCredentials.sid) : ''
+  const storedSlsValue = storedCredentials?.sls ? decrypt(storedCredentials.sls) : ''
+  const storedSmaValue = storedCredentials?.sma || ''
+  const areCredentialsUnchanged =
+    cardSettings.hasCookies &&
+    cardSettings.sidValue === storedSidValue &&
+    cardSettings.slsValue === storedSlsValue &&
+    cardSettings.smaValue === storedSmaValue
 
   const handleShowSteamLoginWindow = async () => {
     if (!isTauri()) return
@@ -37,7 +46,7 @@ export const SteamCredentials = () => {
     }
 
     if (result.success) {
-      handleSaveCredentials(
+      await handleSaveCredentials(
         result.sessionid,
         result.steamLoginSecure,
         undefined,
@@ -81,6 +90,10 @@ export const SteamCredentials = () => {
 
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     ;(event.target as HTMLImageElement).src = '/fallback.webp'
+  }
+
+  const handleAvatarImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    event.currentTarget.src = '/logo.png'
   }
 
   return (
@@ -182,13 +195,13 @@ export const SteamCredentials = () => {
                   <div className='flex-col'>
                     <div className='flex justify-center items-center gap-3'>
                       <Image
-                        src={userSummary?.avatar || '/fallback.webp'}
+                        src={userSummary?.avatar || '/logo.png'}
                         height={38}
                         width={38}
                         alt='user avatar'
                         className='w-9.5 h-9.5 rounded-full'
                         priority
-                        onError={handleImageError}
+                        onError={handleAvatarImageError}
                       />
                       <div className='flex flex-col items-end gap-1'>
                         <div className='flex gap-1'>
@@ -350,7 +363,9 @@ export const SteamCredentials = () => {
                 className='bg-btn-secondary text-btn-text font-bold'
                 radius='full'
                 isDisabled={
-                  cardSettings.hasCookies || !cardSettings.sidValue || !cardSettings.slsValue
+                  !cardSettings.sidValue.trim() ||
+                  !cardSettings.slsValue.trim() ||
+                  areCredentialsUnchanged
                 }
                 onPress={() =>
                   handleSaveCredentials(

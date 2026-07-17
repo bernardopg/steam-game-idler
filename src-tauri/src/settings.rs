@@ -7,6 +7,17 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+const LEGACY_APP_IDENTIFIER: &str = "com.zevnda.steam-game-idler";
+const LEGACY_MIGRATION_MARKER: &str = ".legacy-profile-migration-v1.json";
+const WEBKIT_DATA_DIRECTORIES: &[&str] = &[
+    "CacheStorage",
+    "WebKitCache",
+    "cookies",
+    "localstorage",
+    "mediakeys",
+    "storage",
+];
+
 // Default settings
 fn get_default_settings() -> Value {
     json!({
@@ -130,6 +141,203 @@ fn copy_directory_contents(source_dir: &Path, target_dir: &Path) -> Result<(), S
     }
 
     Ok(())
+}
+
+fn copy_webkit_directory(
+    source_dir: &Path,
+    target_dir: &Path,
+    has_current_profiles: bool,
+) -> Result<(), String> {
+    if !source_dir.exists() {
+        return Ok(());
+    }
+
+    if target_dir.exists() {
+        if has_current_profiles {
+            return Ok(());
+        }
+        fs::remove_dir_all(target_dir).map_err(|error| {
+            format!(
+                "Failed to replace initialized WebKit directory {}: {}",
+                target_dir.display(),
+                error
+            )
+        })?;
+    }
+
+    copy_directory_contents(source_dir, target_dir)
+}
+
+fn is_missing_value(value: &Value) -> bool {
+    matches!(value, Value::Null) || matches!(value, Value::String(text) if text.trim().is_empty())
+}
+
+/// Merge persisted settings without replacing an explicit value from the current profile.
+///
+/// API keys and Steam credentials are represented as strings (or nested objects), so this
+/// also recovers a partially saved credential set while keeping values the user entered in
+/// the current application profile.
+fn merge_missing_values(current: &mut Value, legacy: &Value) {
+    match (current, legacy) {
+        (Value::Object(current_map), Value::Object(legacy_map)) => {
+            for (key, legacy_value) in legacy_map {
+                match current_map.get_mut(key) {
+                    Some(current_value) => merge_missing_values(current_value, legacy_value),
+                    None => {
+                        current_map.insert(key.clone(), legacy_value.clone());
+                    }
+                }
+            }
+        }
+        (current_value, legacy_value) if is_missing_value(current_value) => {
+            *current_value = legacy_value.clone();
+        }
+        _ => {}
+    }
+}
+
+fn read_json(path: &Path) -> Result<Value, String> {
+    let contents = fs::read_to_string(path)
+        .map_err(|error| format!("Failed to read {}: {}", path.display(), error))?;
+    serde_json::from_str(&contents)
+        .map_err(|error| format!("Failed to parse {}: {}", path.display(), error))
+}
+
+fn write_json(path: &Path, value: &Value) -> Result<(), String> {
+    let contents = serde_json::to_string_pretty(value)
+        .map_err(|error| format!("Failed to serialize {}: {}", path.display(), error))?;
+    fs::write(path, contents)
+        .map_err(|error| format!("Failed to write {}: {}", path.display(), error))
+}
+
+fn merge_settings_file(legacy_path: &Path, current_path: &Path) -> Result<(), String> {
+    let legacy_settings = read_json(legacy_path)?;
+    if !current_path.exists() {
+        return write_json(current_path, &legacy_settings);
+    }
+
+    let mut current_settings = read_json(current_path)?;
+    let before = current_settings.clone();
+    merge_missing_values(&mut current_settings, &legacy_settings);
+    if current_settings != before {
+        write_json(current_path, &current_settings)?;
+    }
+
+    Ok(())
+}
+
+fn is_steam_profile_dir(path: &Path) -> bool {
+    path.join("settings.json").is_file()
+}
+
+fn has_steam_profiles(root: &Path) -> bool {
+    fs::read_dir(root)
+        .ok()
+        .into_iter()
+        .flatten()
+        .flatten()
+        .any(|entry| {
+            entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false)
+                && is_steam_profile_dir(&entry.path())
+        })
+}
+
+/// Migrate data created before the application identifier changed.
+///
+/// The migration is intentionally conservative: current values always win, WebKit databases
+/// are copied only when their destination does not exist, and old logs are not imported.
+/// Keeping it path-based makes this critical upgrade behavior unit-testable without Tauri.
+fn migrate_legacy_app_data_at_paths(
+    legacy_root: &Path,
+    current_root: &Path,
+) -> Result<bool, String> {
+    let marker_path = current_root.join(LEGACY_MIGRATION_MARKER);
+    if marker_path.exists() || !legacy_root.is_dir() || legacy_root == current_root {
+        return Ok(false);
+    }
+
+    create_private_dir_all(current_root)?;
+    // Tauri may initialize WebKit directories before `setup` runs. If the current
+    // application has no saved SGI profile yet, those files cannot represent user data,
+    // so replace the whole store and preserve the legacy `userSummary` localStorage.
+    let has_current_profiles = has_steam_profiles(current_root);
+
+    for entry in fs::read_dir(legacy_root).map_err(|error| {
+        format!(
+            "Failed to read legacy application data {}: {}",
+            legacy_root.display(),
+            error
+        )
+    })? {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let source_path = entry.path();
+        let target_path = current_root.join(entry.file_name());
+        let file_type = entry.file_type().map_err(|error| error.to_string())?;
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+
+        // Log history has no state needed to operate the app and would make an upgrade look
+        // like it generated old errors again.
+        if name == "log.txt" || name == LEGACY_MIGRATION_MARKER {
+            continue;
+        }
+
+        if file_type.is_dir() {
+            if is_steam_profile_dir(&source_path) {
+                // Validate before copying. A malformed legacy settings file must never be
+                // introduced into a previously clean current profile.
+                read_json(&source_path.join("settings.json"))?;
+                copy_directory_contents(&source_path, &target_path)?;
+                merge_settings_file(
+                    &source_path.join("settings.json"),
+                    &target_path.join("settings.json"),
+                )?;
+            } else if WEBKIT_DATA_DIRECTORIES.contains(&name.as_ref()) {
+                // SQLite/WebKit stores consist of multiple related files. Merging an already
+                // initialized store could produce an inconsistent database, so transfer only
+                // complete stores into a profile that has not created one yet.
+                copy_webkit_directory(&source_path, &target_path, has_current_profiles)?;
+            } else {
+                copy_directory_contents(&source_path, &target_path)?;
+            }
+        } else if file_type.is_file() && !target_path.exists() {
+            fs::copy(&source_path, &target_path).map_err(|error| {
+                format!(
+                    "Failed to copy {} to {}: {}",
+                    source_path.display(),
+                    target_path.display(),
+                    error
+                )
+            })?;
+        }
+    }
+
+    write_json(
+        &marker_path,
+        &json!({
+            "source": LEGACY_APP_IDENTIFIER,
+            "version": 1,
+        }),
+    )?;
+
+    Ok(true)
+}
+
+pub fn migrate_legacy_app_data(app_handle: &tauri::AppHandle) -> Result<bool, String> {
+    if crate::utils::is_portable() {
+        return Ok(false);
+    }
+
+    let current_root = get_user_data_dir(app_handle)?;
+    let data_root = current_root.parent().ok_or_else(|| {
+        format!(
+            "Could not determine the parent data directory for {}",
+            current_root.display()
+        )
+    })?;
+    let legacy_root = data_root.join(LEGACY_APP_IDENTIFIER);
+
+    migrate_legacy_app_data_at_paths(&legacy_root, &current_root)
 }
 
 #[tauri::command]
@@ -336,34 +544,48 @@ pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Res
     use serde_json::Value;
     use std::fs::File;
     use std::io::Read;
+    use std::time::SystemTime;
 
     fn read_start_minimized_from_dir(app_data_dir: &PathBuf) -> Option<bool> {
+        let mut candidates = Vec::new();
+
         if let Ok(entries) = std::fs::read_dir(app_data_dir) {
             for entry in entries.flatten() {
-                if entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
-                    let settings_file = entry.path().join("settings.json");
-                    if settings_file.exists() {
-                        if let Ok(mut file) = File::open(&settings_file) {
-                            let mut contents = String::new();
-                            if file.read_to_string(&mut contents).is_ok() {
-                                if let Ok(settings) = serde_json::from_str::<Value>(&contents) {
-                                    if let Some(general) = settings.get("general") {
-                                        if let Some(start_minimized) = general.get("startMinimized")
-                                        {
-                                            return Some(
-                                                start_minimized.as_bool().unwrap_or(false),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                    continue;
                 }
+
+                let settings_file = entry.path().join("settings.json");
+                let Ok(mut file) = File::open(&settings_file) else {
+                    continue;
+                };
+                let mut contents = String::new();
+                if file.read_to_string(&mut contents).is_err() {
+                    continue;
+                }
+                let Ok(settings) = serde_json::from_str::<Value>(&contents) else {
+                    continue;
+                };
+                let Some(start_minimized) = settings
+                    .get("general")
+                    .and_then(|general| general.get("startMinimized"))
+                    .and_then(Value::as_bool)
+                else {
+                    continue;
+                };
+
+                let modified = settings_file
+                    .metadata()
+                    .and_then(|metadata| metadata.modified())
+                    .unwrap_or(SystemTime::UNIX_EPOCH);
+                candidates.push((modified, entry.file_name(), start_minimized));
             }
         }
 
-        None
+        candidates
+            .into_iter()
+            .max_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)))
+            .map(|(_, _, start_minimized)| start_minimized)
     }
 
     let app_data_dir = get_user_data_dir(app_handle)?;
@@ -371,13 +593,137 @@ pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Res
         return Ok(start_minimized);
     }
 
-    let legacy_app_data_dir = get_cache_dir(app_handle)?;
-    if legacy_app_data_dir != app_data_dir {
-        if let Some(start_minimized) = read_start_minimized_from_dir(&legacy_app_data_dir) {
+    let legacy_cache_dir = get_cache_dir(app_handle)?;
+    if legacy_cache_dir != app_data_dir {
+        if let Some(start_minimized) = read_start_minimized_from_dir(&legacy_cache_dir) {
             return Ok(start_minimized);
         }
     }
 
     // Default to false if no setting found
     Ok(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temporary_directory(name: &str) -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "sgi-settings-{name}-{}-{unique}",
+            std::process::id()
+        ))
+    }
+
+    fn settings(api_key: Value, credentials: Value, start_minimized: bool) -> Value {
+        json!({
+            "general": { "apiKey": api_key, "startMinimized": start_minimized },
+            "cardFarming": { "credentials": credentials },
+        })
+    }
+
+    #[test]
+    fn migrates_a_legacy_profile_once_without_importing_logs() {
+        let root = temporary_directory("legacy-migration");
+        let legacy = root.join("legacy");
+        let current = root.join("current");
+        let steam_id = "76561198000000000";
+        let legacy_profile = legacy.join(steam_id);
+        create_private_dir_all(&legacy_profile).unwrap();
+        write_json(
+            &legacy_profile.join("settings.json"),
+            &settings(
+                json!("legacy-api-key"),
+                json!({ "sid": "legacy-sid", "sls": "legacy-sls" }),
+                true,
+            ),
+        )
+        .unwrap();
+        create_private_dir_all(&legacy.join("localstorage")).unwrap();
+        fs::write(legacy.join("localstorage").join("state"), "legacy state").unwrap();
+        create_private_dir_all(&current.join("localstorage")).unwrap();
+        fs::write(
+            current.join("localstorage").join("state"),
+            "empty new state",
+        )
+        .unwrap();
+        fs::write(legacy.join("log.txt"), "old log entry").unwrap();
+
+        assert!(migrate_legacy_app_data_at_paths(&legacy, &current).unwrap());
+        let migrated = read_json(&current.join(steam_id).join("settings.json")).unwrap();
+        assert_eq!(migrated["general"]["apiKey"], json!("legacy-api-key"));
+        assert_eq!(
+            migrated["cardFarming"]["credentials"]["sid"],
+            json!("legacy-sid")
+        );
+        assert!(current.join("localstorage").join("state").exists());
+        assert_eq!(
+            fs::read_to_string(current.join("localstorage").join("state")).unwrap(),
+            "legacy state"
+        );
+        assert!(!current.join("log.txt").exists());
+        assert!(current.join(LEGACY_MIGRATION_MARKER).exists());
+        assert!(!migrate_legacy_app_data_at_paths(&legacy, &current).unwrap());
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn retains_current_values_and_fills_only_missing_legacy_values() {
+        let root = temporary_directory("merge-settings");
+        let legacy = root.join("legacy");
+        let current = root.join("current");
+        let steam_id = "76561198000000001";
+        let legacy_profile = legacy.join(steam_id);
+        let current_profile = current.join(steam_id);
+        create_private_dir_all(&legacy_profile).unwrap();
+        create_private_dir_all(&current_profile).unwrap();
+
+        write_json(
+            &legacy_profile.join("settings.json"),
+            &settings(
+                json!("legacy-api-key"),
+                json!({ "sid": "legacy-sid", "sls": "legacy-sls" }),
+                true,
+            ),
+        )
+        .unwrap();
+        write_json(
+            &current_profile.join("settings.json"),
+            &settings(
+                json!("current-api-key"),
+                json!({ "sid": "current-sid", "sls": "" }),
+                false,
+            ),
+        )
+        .unwrap();
+        create_private_dir_all(&legacy.join("localstorage")).unwrap();
+        create_private_dir_all(&current.join("localstorage")).unwrap();
+        fs::write(legacy.join("localstorage").join("state"), "legacy state").unwrap();
+        fs::write(current.join("localstorage").join("state"), "current state").unwrap();
+
+        assert!(migrate_legacy_app_data_at_paths(&legacy, &current).unwrap());
+        let migrated = read_json(&current_profile.join("settings.json")).unwrap();
+        assert_eq!(migrated["general"]["apiKey"], json!("current-api-key"));
+        assert_eq!(migrated["general"]["startMinimized"], json!(false));
+        assert_eq!(
+            migrated["cardFarming"]["credentials"]["sid"],
+            json!("current-sid")
+        );
+        assert_eq!(
+            migrated["cardFarming"]["credentials"]["sls"],
+            json!("legacy-sls")
+        );
+        assert_eq!(
+            fs::read_to_string(current.join("localstorage").join("state")).unwrap(),
+            "current state"
+        );
+
+        fs::remove_dir_all(root).unwrap();
+    }
 }

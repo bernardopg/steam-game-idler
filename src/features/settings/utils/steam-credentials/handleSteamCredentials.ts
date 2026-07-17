@@ -85,7 +85,7 @@ export const handleSaveCredentials = async (
         })
 
         // Save card farming user and update UI state
-        await invoke<InvokeSettings>('update_user_settings', {
+        const response = await invoke<InvokeSettings>('update_user_settings', {
           steamId: activeUserSummary?.steamId,
           key: 'cardFarming.userSummary',
           value: cardFarmingUser,
@@ -93,6 +93,7 @@ export const handleSaveCredentials = async (
 
         setCardFarmingUser(cardFarmingUser)
         setHasCookies(true)
+        setUserSettings(response.settings)
 
         showSuccessToast(i18next.t('toast.cardFarming.logIn', { user: validate.user }))
         logEvent(`[Settings - Card Farming] Logged in as ${validate.user}`)
