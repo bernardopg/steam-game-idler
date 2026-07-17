@@ -26,7 +26,11 @@ use user_data::*;
 use utils::*;
 
 use std::env;
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
+use std::time::Duration;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -52,7 +56,10 @@ pub fn run() {
                 std::env::set_var("KEY", key);
             },
             _ => {
-                panic!("No obfuscated API key available in production build");
+                // A packaged build must remain usable with the API key saved in
+                // Settings. Release automation deliberately does not embed a
+                // maintainer secret in public artifacts.
+                eprintln!("[App Init] No embedded API key; using the key configured in Settings");
             }
         }
     }
@@ -193,37 +200,59 @@ fn should_setup_tray_icon() -> bool {
 
 fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let window = app_handle.get_webview_window("main").unwrap();
+    let frontend_ready = Arc::new(AtomicBool::new(false));
 
-    // Listen for ready event from frontend
-    // Hide the window initially and only show it once the frontend is ready
-    // This prevents a blank window from showing during load
+    // Keep the startup animation out of sight until the frontend is ready.
+    // The native fallback below is deliberately independent of the webview:
+    // a failed or delayed frontend must never leave a non-minimized app hidden
+    // forever (notably under Wayland compositors).
     let window_clone = window.clone();
     let app_handle_clone = app_handle.clone();
+    let frontend_ready_for_event = Arc::clone(&frontend_ready);
     window.listen("ready", move |_| {
-        // Check if start minimized is enabled
+        frontend_ready_for_event.store(true, Ordering::Release);
         let app_handle_for_async = app_handle_clone.clone();
         let window_for_async = window_clone.clone();
         tauri::async_runtime::spawn(async move {
-            match settings::check_start_minimized_setting(&app_handle_for_async).await {
-                Ok(should_start_minimized) => {
-                    // If start minimized is enabled, keep the window hidden
-                    if !should_start_minimized {
-                        let _ = window_for_async.unminimize();
-                        let _ = window_for_async.show();
-                        let _ = window_for_async.set_focus();
-                    }
-                }
-                Err(_) => {
-                    // If we can't check the setting, default to showing the window
-                    let _ = window_for_async.unminimize();
-                    let _ = window_for_async.show();
-                    let _ = window_for_async.set_focus();
-                }
-            }
+            show_window_when_not_minimized(&app_handle_for_async, &window_for_async, false).await;
         });
     });
 
+    let app_handle_for_fallback = app_handle.clone();
+    tauri::async_runtime::spawn(async move {
+        // A normal startup emits `ready` much sooner. This only affects a
+        // stalled frontend, while still keeping intentional tray starts hidden.
+        tokio::time::sleep(Duration::from_secs(15)).await;
+        if !frontend_ready.load(Ordering::Acquire) {
+            show_window_when_not_minimized(&app_handle_for_fallback, &window, true).await;
+        }
+    });
+
     Ok(())
+}
+
+async fn show_window_when_not_minimized(
+    app_handle: &tauri::AppHandle,
+    window: &tauri::WebviewWindow,
+    is_fallback: bool,
+) {
+    let should_start_minimized = settings::check_start_minimized_setting(app_handle)
+        .await
+        .unwrap_or(false);
+    if should_start_minimized {
+        return;
+    }
+
+    if is_fallback {
+        let _ = logging::log_event(
+            "[App Init] Frontend ready timed out; showing window via native fallback".into(),
+            app_handle.clone(),
+        );
+    }
+
+    let _ = window.unminimize();
+    let _ = window.show();
+    let _ = window.set_focus();
 }
 
 fn setup_tray_icon(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {

@@ -1,6 +1,6 @@
 [package]
 name = "steam-game-idler"
-version = "5.0.16"
+version = "5.0.20"
 authors = ["zevnda", "Bernardo Pinto Gomes"]
 license = "GPL-3.0"
 repository = "https://github.com/bernardopg/steam-game-idler"

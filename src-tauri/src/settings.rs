@@ -6,6 +6,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 const LEGACY_APP_IDENTIFIER: &str = "com.zevnda.steam-game-idler";
 const LEGACY_MIGRATION_MARKER: &str = ".legacy-profile-migration-v1.json";
@@ -540,54 +541,69 @@ pub async fn reset_user_settings(
     }))
 }
 
-pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Result<bool, String> {
-    use serde_json::Value;
-    use std::fs::File;
-    use std::io::Read;
-    use std::time::SystemTime;
+fn read_start_minimized_from_dir(app_data_dir: &Path) -> Option<bool> {
+    let mut candidates = Vec::new();
 
-    fn read_start_minimized_from_dir(app_data_dir: &PathBuf) -> Option<bool> {
-        let mut candidates = Vec::new();
-
-        if let Ok(entries) = std::fs::read_dir(app_data_dir) {
-            for entry in entries.flatten() {
-                if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
-                    continue;
-                }
-
-                let settings_file = entry.path().join("settings.json");
-                let Ok(mut file) = File::open(&settings_file) else {
-                    continue;
-                };
-                let mut contents = String::new();
-                if file.read_to_string(&mut contents).is_err() {
-                    continue;
-                }
-                let Ok(settings) = serde_json::from_str::<Value>(&contents) else {
-                    continue;
-                };
-                let Some(start_minimized) = settings
-                    .get("general")
-                    .and_then(|general| general.get("startMinimized"))
-                    .and_then(Value::as_bool)
-                else {
-                    continue;
-                };
-
-                let modified = settings_file
-                    .metadata()
-                    .and_then(|metadata| metadata.modified())
-                    .unwrap_or(SystemTime::UNIX_EPOCH);
-                candidates.push((modified, entry.file_name(), start_minimized));
+    if let Ok(entries) = std::fs::read_dir(app_data_dir) {
+        for entry in entries.flatten() {
+            if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                continue;
             }
-        }
 
-        candidates
-            .into_iter()
-            .max_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)))
-            .map(|(_, _, start_minimized)| start_minimized)
+            let profile_id = entry.file_name().to_string_lossy().into_owned();
+            let settings_file = entry.path().join("settings.json");
+            let Ok(mut file) = File::open(&settings_file) else {
+                continue;
+            };
+            let mut contents = String::new();
+            if file.read_to_string(&mut contents).is_err() {
+                continue;
+            }
+            let Ok(settings) = serde_json::from_str::<Value>(&contents) else {
+                continue;
+            };
+            let Some(start_minimized) = settings
+                .get("general")
+                .and_then(|general| general.get("startMinimized"))
+                .and_then(Value::as_bool)
+            else {
+                continue;
+            };
+
+            // Development profiles can be newer than the signed-in user's
+            // profile. Prefer a profile whose saved Steam identity matches its
+            // directory; use modification time only as a tie breaker.
+            let has_matching_user_summary = settings
+                .get("cardFarming")
+                .and_then(|card_farming| card_farming.get("userSummary"))
+                .and_then(|summary| summary.get("steamId"))
+                .and_then(Value::as_str)
+                .is_some_and(|steam_id| steam_id == profile_id);
+            let modified = settings_file
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .unwrap_or(SystemTime::UNIX_EPOCH);
+            candidates.push((
+                has_matching_user_summary,
+                modified,
+                profile_id,
+                start_minimized,
+            ));
+        }
     }
 
+    candidates
+        .into_iter()
+        .max_by(|left, right| {
+            left.0
+                .cmp(&right.0)
+                .then_with(|| left.1.cmp(&right.1))
+                .then_with(|| left.2.cmp(&right.2))
+        })
+        .map(|(_, _, _, start_minimized)| start_minimized)
+}
+
+pub async fn check_start_minimized_setting(app_handle: &tauri::AppHandle) -> Result<bool, String> {
     let app_data_dir = get_user_data_dir(app_handle)?;
     if let Some(start_minimized) = read_start_minimized_from_dir(&app_data_dir) {
         return Ok(start_minimized);
@@ -625,6 +641,29 @@ mod tests {
             "general": { "apiKey": api_key, "startMinimized": start_minimized },
             "cardFarming": { "credentials": credentials },
         })
+    }
+
+    #[test]
+    fn start_minimized_prefers_the_signed_in_profile_over_a_newer_dev_profile() {
+        let root = temporary_directory("start-minimized-profile");
+        let dev_profile = root.join("76561198000000000");
+        let user_steam_id = "76561198000000001";
+        let user_profile = root.join(user_steam_id);
+        create_private_dir_all(&dev_profile).unwrap();
+        create_private_dir_all(&user_profile).unwrap();
+
+        let mut user_settings = settings(json!(null), json!(null), false);
+        user_settings["cardFarming"]["userSummary"] = json!({ "steamId": user_steam_id });
+        write_json(&user_profile.join("settings.json"), &user_settings).unwrap();
+        // Write the development profile last so it has the newest timestamp.
+        write_json(
+            &dev_profile.join("settings.json"),
+            &settings(json!(null), json!(null), true),
+        )
+        .unwrap();
+
+        assert_eq!(read_start_minimized_from_dir(&root), Some(false));
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
