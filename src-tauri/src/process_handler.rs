@@ -238,6 +238,20 @@ pub async fn kill_all_steamutil_processes() -> Result<Value, String> {
     }))
 }
 
+// Kill tracked SteamUtility child processes synchronously via their handles.
+// Used on app exit: the async kill_all_steamutil_processes runs a full sysinfo
+// process scan, which can surface an error popup while the app is tearing down.
+pub fn kill_tracked_processes_blocking() {
+    if let Ok(mut processes) = SPAWNED_PROCESSES.lock() {
+        for process in processes.iter_mut() {
+            let _ = process.child.kill();
+            let _ = process.child.wait();
+            let _ = fs::remove_dir_all(&process.work_dir);
+        }
+        processes.clear();
+    }
+}
+
 pub fn cleanup_dead_processes() -> Result<(), String> {
     let mut processes = SPAWNED_PROCESSES.lock().map_err(|e| e.to_string())?;
     let mut i = 0;

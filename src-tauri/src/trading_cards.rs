@@ -3,9 +3,8 @@ use reqwest::Client;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs::File;
-use std::fs::{remove_file, OpenOptions};
+use std::fs::remove_file;
 use std::io::Read;
-use std::io::Write;
 
 #[tauri::command]
 pub async fn get_trading_cards(
@@ -322,16 +321,7 @@ pub async fn get_trading_cards(
     // Save the response to inventory.json
     let file_name = "inventory.json";
     let trading_cards_file_path = app_data_dir.join(file_name);
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(&trading_cards_file_path)
-        .map_err(|e| format!("Failed to open trading cards file: {}", e))?;
-
-    let json_string = serde_json::to_string_pretty(&card_data)
-        .map_err(|e| format!("Failed to serialize trading cards: {}", e))?;
-    file.write_all(json_string.as_bytes())
+    crate::utils::atomic_write_json(&trading_cards_file_path, &card_data)
         .map_err(|e| format!("Failed to write trading cards to file: {}", e))?;
 
     Ok(card_data)
@@ -420,11 +410,7 @@ pub async fn update_card_data(
     }
 
     // Write the updated cards data back to the file
-    let json_string = serde_json::to_string_pretty(&cards_data)
-        .map_err(|e| format!("Failed to serialize card farming JSON: {}", e))?;
-    let mut file = File::create(&cards_file_path)
-        .map_err(|e| format!("Failed to create card farming file: {}", e))?;
-    file.write_all(json_string.as_bytes())
+    crate::utils::atomic_write_json(&cards_file_path, &cards_data)
         .map_err(|e| format!("Failed to write to card farming file: {}", e))?;
 
     Ok(json!({

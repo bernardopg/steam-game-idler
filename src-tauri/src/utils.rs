@@ -331,6 +331,41 @@ pub fn get_tray_icon(default: bool) -> String {
     base64::engine::general_purpose::STANDARD.encode(icon_bytes)
 }
 
+/// Serialize `value` to pretty JSON and write it to `path` atomically.
+///
+/// Writes to a sibling temp file (`<name>.<pid>.<nanos>.tmp`) then renames it
+/// over the target, so a crash mid-write can never leave a truncated or empty
+/// JSON file. The pid+nanos suffix keeps concurrent writers from colliding on
+/// the temp path. Data files here are plain 0644, so no permission preservation
+/// is needed across the rename.
+pub fn atomic_write_json<T: serde::Serialize>(
+    path: &std::path::Path,
+    value: &T,
+) -> std::io::Result<()> {
+    let json = serde_json::to_string_pretty(value)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+    let dir = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("data.json");
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let tmp = dir.join(format!("{file_name}.{}.{nanos}.tmp", std::process::id()));
+
+    fs::write(&tmp, json.as_bytes())?;
+    match fs::rename(&tmp, path) {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            let _ = fs::remove_file(&tmp);
+            Err(e)
+        }
+    }
+}
+
 pub fn get_lib_path() -> Result<String, String> {
     let mut path = std::env::current_exe().map_err(|e| e.to_string())?;
     path.pop();
@@ -834,4 +869,32 @@ pub fn update_tray_menu(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::atomic_write_json;
+
+    #[test]
+    fn atomic_write_json_writes_valid_json_and_leaves_no_tmp() {
+        let dir = std::env::temp_dir().join(format!("sgi-atomic-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("data.json");
+
+        atomic_write_json(&path, &serde_json::json!({ "a": 1, "b": [2, 3] })).unwrap();
+
+        let contents = std::fs::read_to_string(&path).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&contents).unwrap();
+        assert_eq!(parsed["a"], 1);
+        assert_eq!(parsed["b"][1], 3);
+
+        // No leftover temp files next to the target.
+        let leftover = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .any(|e| e.file_name().to_string_lossy().ends_with(".tmp"));
+        assert!(!leftover, "atomic write left a .tmp file behind");
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }

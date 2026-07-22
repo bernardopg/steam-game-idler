@@ -165,10 +165,10 @@ pub fn run() {
         .expect("Error while building tauri application")
         .run(move |_, event| match event {
             tauri::RunEvent::Exit => {
-                // Kill all SteamUtil processes on app exit
-                tauri::async_runtime::block_on(async {
-                    let _ = kill_all_steamutil_processes().await;
-                });
+                // Kill tracked idle processes synchronously via their handles. The async
+                // kill_all path scans every system process (sysinfo) and can surface an
+                // error popup while the app is already tearing down.
+                kill_tracked_processes_blocking();
             }
             _ => {}
         });

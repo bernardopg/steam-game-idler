@@ -3,7 +3,6 @@ use serde_json::{json, Value};
 use std::fs;
 use std::fs::File;
 use std::io::Read;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::SystemTime;
@@ -205,9 +204,7 @@ fn read_json(path: &Path) -> Result<Value, String> {
 }
 
 fn write_json(path: &Path, value: &Value) -> Result<(), String> {
-    let contents = serde_json::to_string_pretty(value)
-        .map_err(|error| format!("Failed to serialize {}: {}", path.display(), error))?;
-    fs::write(path, contents)
+    crate::utils::atomic_write_json(path, value)
         .map_err(|error| format!("Failed to write {}: {}", path.display(), error))
 }
 
@@ -421,11 +418,7 @@ pub async fn get_user_settings(
             .map_err(|e| format!("Failed to parse settings JSON: {}", e))?
     } else {
         // Create a new file with default settings
-        let json_string = serde_json::to_string_pretty(&default_settings)
-            .map_err(|e| format!("Failed to serialize default settings JSON: {}", e))?;
-        let mut file = File::create(&settings_file_path)
-            .map_err(|e| format!("Failed to create settings file: {}", e))?;
-        file.write_all(json_string.as_bytes())
+        crate::utils::atomic_write_json(&settings_file_path, &default_settings)
             .map_err(|e| format!("Failed to write to settings file: {}", e))?;
         default_settings.clone()
     };
@@ -435,11 +428,7 @@ pub async fn get_user_settings(
     merge_defaults(&mut settings, &default_settings);
     if settings != before {
         // Write back if any changes
-        let json_string = serde_json::to_string_pretty(&settings)
-            .map_err(|e| format!("Failed to serialize settings JSON: {}", e))?;
-        let mut file = File::create(&settings_file_path)
-            .map_err(|e| format!("Failed to create settings file: {}", e))?;
-        file.write_all(json_string.as_bytes())
+        crate::utils::atomic_write_json(&settings_file_path, &settings)
             .map_err(|e| format!("Failed to write to settings file: {}", e))?;
     }
 
@@ -506,11 +495,7 @@ pub async fn update_user_settings(
     }
 
     // Write the updated settings back to the file
-    let json_string = serde_json::to_string_pretty(&settings)
-        .map_err(|e| format!("Failed to serialize settings JSON: {}", e))?;
-    let mut file = File::create(&settings_file_path)
-        .map_err(|e| format!("Failed to create settings file: {}", e))?;
-    file.write_all(json_string.as_bytes())
+    crate::utils::atomic_write_json(&settings_file_path, &settings)
         .map_err(|e| format!("Failed to write to settings file: {}", e))?;
 
     Ok(json!({
@@ -529,11 +514,7 @@ pub async fn reset_user_settings(
     let default_settings = get_default_settings();
 
     // Create or overwrite the settings file with default settings
-    let json_string = serde_json::to_string_pretty(&default_settings)
-        .map_err(|e| format!("Failed to serialize default settings JSON: {}", e))?;
-    let mut file = File::create(&settings_file_path)
-        .map_err(|e| format!("Failed to create settings file: {}", e))?;
-    file.write_all(json_string.as_bytes())
+    crate::utils::atomic_write_json(&settings_file_path, &default_settings)
         .map_err(|e| format!("Failed to write to settings file: {}", e))?;
 
     Ok(json!({
