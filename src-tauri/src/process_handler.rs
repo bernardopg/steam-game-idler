@@ -151,7 +151,13 @@ pub async fn get_running_processes() -> Result<Value, String> {
             })
             .collect::<Vec<Value>>();
 
-        for (pid, app_id, game_name) in external_idle_process_entries() {
+        // The sysinfo scan enumerates every OS process and blocks; run it off the
+        // async runtime's worker threads so the 1s process monitor can't stall them.
+        let external = tokio::task::spawn_blocking(external_idle_process_entries)
+            .await
+            .map_err(|e| format!("Failed to join blocking task: {}", e))?;
+
+        for (pid, app_id, game_name) in external {
             if processes
                 .iter()
                 .any(|known| known["pid"].as_u64() == Some(pid as u64))
