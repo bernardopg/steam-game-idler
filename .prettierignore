@@ -5,6 +5,7 @@ node_modules
 out
 public
 pnpm-lock.yaml
+src-tauri/templates/*.desktop.hbs
 *.lock
 *.md
 *.mdx

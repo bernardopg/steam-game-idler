@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Steam Game Idler",
   "mainBinaryName": "Steam Game Idler",
-  "version": "5.0.20",
+  "version": "5.0.21",
   "identifier": "com.github.bernardopg.SteamGameIdler",
   "build": {
     "beforeDevCommand": "pnpm run dev",
@@ -16,6 +16,15 @@
     "copyright": "Copyright © 2024-2026 zevnda; fork © 2025-2026 Bernardo Pinto Gomes",
     "targets": "all",
     "externalBin": [],
+    "fileAssociations": [
+      {
+        "name": "Steam App Cache File",
+        "ext": ["acf"],
+        "mimeType": "application/x-steam-app-cache-file",
+        "description": "Steam application cache manifest file",
+        "role": "Viewer"
+      }
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -44,7 +53,11 @@
     "resources": ["libs/*", "LICENSE", ".installed"],
     "linux": {
       "deb": {
-        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libssl3", "libayatana-appindicator3-1"]
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libssl3", "libayatana-appindicator3-1"],
+        "desktopTemplate": "templates/linux.desktop.hbs"
+      },
+      "rpm": {
+        "desktopTemplate": "templates/linux.desktop.hbs"
       },
       "appimage": {
         "bundleMediaFramework": true
